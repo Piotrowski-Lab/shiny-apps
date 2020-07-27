@@ -1,0 +1,11 @@
+h1{font-size: 24pt; font-weight: 100;
+          line-height: 1.1; color: #000000;}
+          
+/* sidebar */
+.col-sm-4 .well {height: 1200px}
+
+#welcomePanel.col-sm-12 {width: 1120px; height: 1155px; overflow-x: scroll; overflow-y: scroll;}
+#featPlot.col-sm-12 {width: 1120px; height: 1155px; overflow-x: scroll; overflow-y: scroll;}
+#hmapPlot.col-sm-12 {width: 1120px; height: 1050px; overflow-x: scroll; overflow-y: scroll;}
+#vlnPlot.col-sm-12 {width: 1120px; height: 1155px; overflow-x: scroll; overflow-y: scroll;}
+#geneDB.col-sm-12 {width: 1120px; height: 1155px; overflow-x: scroll; overflow-y: scroll;}
