@@ -1,0 +1,12 @@
+h1{font-size: 24pt; font-weight: 100;
+          line-height: 1.1; color: #000000;}
+ /* changes the font for all text input*/
+.form-control.shiny-bound-input {font-size: 10pt;}
+/* changes the font for sidebar headers*/
+.form-group.shiny-input-container {font-size: 11pt;}
+/* change font for regular text (not in an input box) in sidebar*/
+.well {font-size: 11pt;}
+/* changes the font at the end of the feature plot panel*/
+#note.well {font-size: 9pt;}
+/*font size for radio button labels*/
+.radio-inline {font-size: 10pt; margin-right: 10px;}

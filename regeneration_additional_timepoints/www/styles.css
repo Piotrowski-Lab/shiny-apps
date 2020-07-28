@@ -1,0 +1,42 @@
+h1{font-size: 24pt; font-weight: 100; line-height: 1.4; color: #000000;}
+
+/*Dimensions for introduction page
+note that the class "welcome" was added to the mainPanel() function to specify
+that page only*/
+.col-sm-8.welcome {width: 1200px; height: 1050px; overflow-y: scroll;}
+
+ /* changes the font for all text input*/
+.form-control.shiny-bound-input {font-size: 10pt;}
+
+/* changes the font for sidebar headers*/
+.form-group.shiny-input-container {font-size: 11pt;}
+
+/* change font for regular text in sidebar, add scrolling*/
+.well {font-size: 11pt; height: 1100px; width:500px; overflow-y: scroll;}
+
+/* changes the font at the end of the feature plot panel*/
+#note.well {font-size: 9pt;}
+
+/*font size for radio button labels*/
+.radio-inline {font-size: 10pt; margin-right: 10px;}
+
+/*
+Scrolling and dimensions for all plot main panels
+TIP! adding space between classes will select all children of a parent class
+https://css-tricks.com/multiple-class-id-selectors/
+*/
+.col-sm-8 .row .col-sm-12 {width: 1200px; height: 1020px; overflow-y: scroll;}
+
+/*Diffential expression table height*/
+.col-sm-8 .row .col-sm-12.diffExpMain {width: 1200px; height: 1080px; overflow-y: scroll;}
+
+/*Diffential expression table height*/
+.btn {text-transform: none;}
+
+/*scrollable window in heatmap*/
+.col-sm-12.hmapID {width: 1500px; height: 900px; overflow-y: scroll;}
+
+/*Changing button color for cosmo theme*/
+/* .btn {background-color: #626897}
+.btn.dropdown-toggle.btn-default{background-color: #626897}
+.btn-default:hover {background-color: #4281dc} */

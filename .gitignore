@@ -1,0 +1,8 @@
+.**/
+*.RDS
+*.dcf
+.smb*
+*.Rmd
+*.html
+._*
+*.RData
