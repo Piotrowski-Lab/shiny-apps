@@ -38,7 +38,7 @@ getLenInput <- function(input) {
 		return(len)
 }
 
-	files <- list.files("./data", pattern = "TRIMMED", full.names = TRUE)
+files <- list.files("./data", pattern = "TRIMMED", full.names = TRUE)
 file_list <- list()
 
 	print("Loading Seurat objects...")
@@ -51,7 +51,8 @@ print("done.")
 
 # ! =========== items to check/change for project {START}
 
-names(file_list) <- as.character(c("all she-pos. cells"))
+names(file_list) <- as.character(c("all she-pos. cells", "AP-cells", "central-cells",
+                                   "DV-cells", "HC-prog", "mantle-cells"))
 
 trt_colors <- c("green3", "gold", "darkorange", "red", "magenta",
 		"mediumpurple1", "lightseagreen", "deepskyblue", "blue")
