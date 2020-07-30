@@ -506,7 +506,8 @@ server <- function(input, output) {
       g <- g + coord_flip() + theme(
         axis.text.x = element_text(angle = 90, hjust = 1))
       
-    } else {
+    } else if (input$Analysis != "neuromast cells") {
+      print('Hi')
       seurat_obj <- SelectDataset()
       selected <- unlist(strsplit(input$dotGenes, " "))
       
@@ -520,14 +521,30 @@ server <- function(input, output) {
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDot]
       print(input$cellIdentsDot)
       
-      # if (input$selectGrpDot == "data.set") {
-      #     caption_txt <- paste(
-      #       "selected cells:", paste(input$cellIdentsDot, collapse = ", "))
-      #     stringr::str_wrap(caption_txt, width = 10)
-      #   } else {
-      #     ""
-      #   }
+      g <- DotPlot(seurat_obj, features = selected,
+                   cols = "RdYlBu", dot.scale = input$dotScale,
+                   group.by = "seurat_clusters")
       
+      g <- g + labs(title = paste("Selected analysis:",
+                                  as.character(input$Analysis)), subtitle = "", caption = "") +
+        theme(plot.title = element_text(face = "plain", size = 14))
+      
+      g <- g + coord_flip() + theme(
+        axis.text.x = element_text(angle = 90, hjust = 1))
+    } else{
+      seurat_obj <- SelectDataset()
+      selected <- unlist(strsplit(input$dotGenes, " "))
+      
+      ifelse(selected %in% com_name,
+             selected <- selected[selected %in% com_name],
+             
+             ifelse(selected %in% ens_id,
+                    selected <- gene_df[ens_id %in% selected, 3],"")
+      )
+      
+      seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDot]
+      print(input$cellIdentsDot)
+
       g <- DotPlot(seurat_obj, features = selected,
                    cols = "RdYlBu", dot.scale = input$dotScale,
                    group.by = input$selectGrpDot)
@@ -538,7 +555,7 @@ server <- function(input, output) {
       
       g <- g + coord_flip() + theme(
         axis.text.x = element_text(angle = 90, hjust = 1))
-    }
+    } 
     return(g)
   })
   
