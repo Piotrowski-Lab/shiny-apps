@@ -294,7 +294,6 @@ server <- function(input, output) {
       clrs <- cluster_clrs
     }
     
-    if (input$Analysis == "neuromast-cells"){
     g <- VlnPlot(seurat_obj, selected,
                  pt.size = input$ptSizeVln, combine = FALSE,
                  group.by = input$selectGrpVln, cols = clrs)
@@ -307,11 +306,11 @@ server <- function(input, output) {
       labs(title = paste("Selected analysis:",
                          as.character(input$Analysis)), subtitle = "", caption = "") +
       theme(plot.title = element_text(face = "bold", size = 15, hjust = 0))
-    }else{
+    if (input$Analysis != "neuromast-cells" && input$selectGrpVln == "cell.type.ident"){
       print('hi')
       g <- VlnPlot(seurat_obj, selected,
                    pt.size = input$ptSizeVln, combine = FALSE,
-                   group.by = "seurat_clusters")
+                   group.by = "seurat_clusters", cols = clrs)
 
       for(k in 1:length(g)) {
         g[[k]] <- g[[k]] + theme(legend.position = "none")
@@ -982,6 +981,60 @@ server <- function(input, output) {
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
         theme(plot.title = element_text(face = "plain", size = 14))
+      if (input$Analysis != "neuromast-cells" && input$selectGrpIndvHmap == "cell.type.ident"){
+        group.by <- "seurat_clusters" #choose group.by parameter
+        cells <- NULL
+        col.min = -2.5
+        col.max = 2.5
+        
+        cells <- cells %||% colnames(x = seurat_obj)
+        
+        data <- as.data.frame(x = t(x = as.matrix(x = GetAssayData(
+          object = seurat_obj, slot = "data")[selected, cells, drop = FALSE])))
+        
+        
+        data <- scale(data)
+        data <- as.data.frame(MinMax(data = data, min = col.min, max = col.max))
+        
+        data$id <- if (is.null(x = group.by)) {
+          Idents(object = seurat_obj)[cells, drop = TRUE]
+        } else {
+          seurat_obj[[group.by, drop = TRUE]][cells, drop = TRUE]
+        }
+        if (!is.factor(x = data$id)) {
+          data$id <- factor(x = data$id)
+        }
+        data$id <- as.vector(x = data$id)
+        
+        data$Cell <- rownames(data)
+        data <- melt(data, variable.name  = "Feature")
+        
+        #preserve identity order
+        if (group.by == "cell.type.ident.by.data.set"){
+          data$id <- factor(data$id, levels = levels(seurat_obj$cell.type.ident.by.data.set))
+        }else if (group.by == "data.set"){
+          data$id <- factor(data$id, levels = levels(seurat_obj$data.set))
+        }else if (group.by == "seurat_clusters"){
+          data$id <- factor(data$id, levels = levels(seurat_obj$seurat_clusters))
+        }else{
+          data$id <- factor(data$id, levels = levels(seurat_obj$cell.type.ident))
+        }
+        
+        g <- ggplot(data, aes(Cell, Feature,fill= value)) +
+          geom_tile(height = .95, width = 2) +
+          scale_fill_distiller(
+            palette = "RdYlBu") +
+          theme_ipsum()+
+          theme(axis.text.x=element_blank(),
+                axis.ticks.x=element_blank(),
+                axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
+                strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
+          facet_grid( ~ id, space = 'free', scales = 'free')
+        
+        g <- g + labs(title = paste("Selected analysis:",
+                                    as.character(input$Analysis)), subtitle = "", caption = "") +
+          theme(plot.title = element_text(face = "plain", size = 14))
+      }
       
     } else {
       seurat_obj <- SelectDataset()
@@ -1055,6 +1108,61 @@ server <- function(input, output) {
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
         theme(plot.title = element_text(face = "plain", size = 14))
+      
+      if (input$Analysis != "neuromast-cells" && input$selectGrpIndvHmap == "cell.type.ident"){
+        group.by <- "seurat_clusters" #choose group.by parameter
+        cells <- NULL
+        col.min = -2.5
+        col.max = 2.5
+        
+        cells <- cells %||% colnames(x = seurat_obj)
+        
+        data <- as.data.frame(x = t(x = as.matrix(x = GetAssayData(
+          object = seurat_obj, slot = "data")[selected, cells, drop = FALSE])))
+        
+        
+        data <- scale(data)
+        data <- as.data.frame(MinMax(data = data, min = col.min, max = col.max))
+        
+        data$id <- if (is.null(x = group.by)) {
+          Idents(object = seurat_obj)[cells, drop = TRUE]
+        } else {
+          seurat_obj[[group.by, drop = TRUE]][cells, drop = TRUE]
+        }
+        if (!is.factor(x = data$id)) {
+          data$id <- factor(x = data$id)
+        }
+        data$id <- as.vector(x = data$id)
+        
+        data$Cell <- rownames(data)
+        data <- melt(data, variable.name  = "Feature")
+        
+        #preserve identity order
+        if (group.by == "cell.type.ident.by.data.set"){
+          data$id <- factor(data$id, levels = levels(seurat_obj$cell.type.ident.by.data.set))
+        }else if (group.by == "data.set"){
+          data$id <- factor(data$id, levels = levels(seurat_obj$data.set))
+        }else if (group.by == "seurat_clusters"){
+          data$id <- factor(data$id, levels = levels(seurat_obj$seurat_clusters))
+        }else{
+          data$id <- factor(data$id, levels = levels(seurat_obj$cell.type.ident))
+        }
+        
+        g <- ggplot(data, aes(Cell, Feature,fill= value)) +
+          geom_tile(height = .95, width = 2) +
+          scale_fill_distiller(
+            palette = "RdYlBu") +
+          theme_ipsum()+
+          theme(axis.text.x=element_blank(),
+                axis.ticks.x=element_blank(),
+                axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
+                strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
+          facet_grid( ~ id, space = 'free', scales = 'free')
+        
+        g <- g + labs(title = paste("Selected analysis:",
+                                    as.character(input$Analysis)), subtitle = "", caption = "") +
+          theme(plot.title = element_text(face = "plain", size = 14))
+      }
       
     }
     return(g)

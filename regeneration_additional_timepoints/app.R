@@ -77,13 +77,13 @@ com_name <- gene_df$Gene.name.uniq
 
 
 # =========== Server
-# source(paste0("https://raw.githubusercontent.com/diazdc/shiny-apps-main/",
+# source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps-main/",
 # 			branch, "/", app_name, "/app_server.R"), local = TRUE)
 
 source(paste0("./app_server.R"), local = TRUE)
 
 # =========== UI
-# source(paste0("https://raw.githubusercontent.com/diazdc/shiny-apps-main/",
+# source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps-main/",
 # 			branch, "/", app_name, "/app_ui.R"), local = TRUE)
 
 source(paste0("./app_ui.R"), local = TRUE)
