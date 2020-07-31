@@ -782,6 +782,28 @@ server <- function(input, output) {
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
         theme(plot.title = element_text(face = "plain", size = 14))
       
+      if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpHmap == "cell.type.ident"){
+        dotplot <- DotPlot(seurat_obj, features = selected,
+                           group.by = "seurat_clusters")
+        
+        dotplot$data$groupIdent <- gsub("(.+?)(\\_.*)", "\\1",dotplot$data$id)
+        dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
+        
+        g <- ggplot(dotplot$data, aes(id, features.plot,fill= avg.exp.scaled, width = 1, height = 1)) +
+          geom_tile(color = "gray", size = 1) +
+          scale_fill_distiller(
+            palette = "RdYlBu") +
+          theme_ipsum()+
+          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
+                axis.title.y.right = element_text(size=13),
+                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12))
+        
+        g <- g + labs(title = paste("Selected analysis:",
+                                    as.character(input$Analysis)), subtitle = "", caption = "") +
+          theme(plot.title = element_text(face = "plain", size = 14))
+      }
+      
+      
     } else {
       seurat_obj <- SelectDataset()
       selected <- unlist(strsplit(input$PhmapGenes, " "))
@@ -803,46 +825,27 @@ server <- function(input, output) {
       dotplot$data$groupIdent <- gsub("(.+?)(\\_.*)", "\\1",dotplot$data$id)
       dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
       
+      #applies to ptime objects
+      if(input$Analysis %in% multiple_idents_seurObj[2:3]){
+        dotplot$data$groupIdent <- gsub("^.*\\.", "",dotplot$data$id)
+        dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
+      }
+      
       g <- ggplot(dotplot$data, aes(id, features.plot,fill= avg.exp.scaled, width = 1, height = 1)) +
         geom_tile(color = "gray", size = 1) +
         scale_fill_distiller(
           palette = "RdYlBu") +
         theme_ipsum()+
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
-                        axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
-                        strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
-                  facet_grid( ~ groupIdent, scales='free_x')
-        # theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
-        #       axis.title.y.right = element_text(size=13),
-        #       strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12))
-        # 
+              axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
+              strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
+        facet_grid( ~ groupIdent, scales='free_x')
+       
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
         theme(plot.title = element_text(face = "plain", size = 14))
       
-      # if (input$selectGrpHmap == "cell.type.ident.by.data.set"){
-      #   
-      #   dotplot <- DotPlot(seurat_obj, features = selected,
-      #                      group.by = input$selectGrpHmap)
-      #   
-      #   dotplot$data$groupIdent <- gsub("(.+?)(\\_.*)", "\\1",dotplot$data$id)
-      #   dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
-      #   
-      #   g <- ggplot(dotplot$data, aes(id, features.plot,fill= avg.exp.scaled, width = 1, height = 1)) +
-      #     geom_tile(color = "gray", size = 1) +
-      #     scale_fill_distiller(
-      #       palette = "RdYlBu") +
-      #     theme_ipsum()+
-      #     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
-      #           axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
-      #           strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
-      #     facet_grid( ~ groupIdent, scales='free_x')
-      #   
-      #   
-      #   g <- g + labs(title = paste("Selected analysis:",
-      #                               as.character(input$Analysis)), subtitle = "", caption = "") +
-      #     theme(plot.title = element_text(face = "plain", size = 14))
-      # }else 
+  
         if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpHmap == "cell.type.ident"){
         dotplot <- DotPlot(seurat_obj, features = selected,
                            group.by = "seurat_clusters")
