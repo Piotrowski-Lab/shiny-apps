@@ -1,11 +1,38 @@
 library(Seurat)
 
 setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
-  
+
 files <- list.files(".", pattern = "*.RDS", full.names = TRUE)
+
+# =============================================== primary object input
+
 combined_obj <- readRDS(files[1]) #combined seurat list
 
 #all_obj <- list("all_data_sets" = combined_obj)
+
+print(object.size(combined_obj), units = "MB") #before
+
+for (i in 1:length(combined_obj)) {
+  combined_obj[[i]]@assays$RNA@counts <- matrix()
+  combined_obj[[i]]@assays$RNA@scale.data <- matrix()
+  combined_obj[[i]]@assays$integrated@scale.data <- matrix()
+  print(paste0("saving: ", names(combined_obj)[i]))
+  saveRDS(combined_obj[[i]], paste0("TRIMMED_", names(combined_obj)[i], ".RDS"))
+}
+
+print(object.size(combined_obj), units = "MB") #after
+
+
+# =================================================== add new objects 
+files <- files[2:3]
+combined_obj <- list()
+
+for (i in 1:length(files)){
+  print(files[i])
+  combined_obj[[i]] <- readRDS(files[i]) #combined seurat list
+}
+combined_obj <- list("SeurObj_ptime_subset_experiments_seurat3_v1.5_" = combined_obj[[1]],
+                  "SeurObj_ptime_subset_homeo_seurat3_v1.0_" = combined_obj[[2]])
 
 print(object.size(combined_obj), units = "MB") #before
 

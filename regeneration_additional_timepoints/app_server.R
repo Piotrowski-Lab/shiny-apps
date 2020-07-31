@@ -34,7 +34,8 @@ server <- function(input, output) {
   printIdents <- reactive({
     seurat_obj <- SelectDataset()
     print(seurat_obj)
-    if (input$Analysis == "neuromast-cells") {
+    #if (input$Analysis == "neuromast-cells"|| input$Analysis == "ptime-regen" || input$Analysis == "ptime-regen") {
+    if(input$Analysis %in% multiple_idents_seurObj){
       sort(unique(seurat_obj@meta.data$cell.type.ident))
     } else {
       sort(unique(seurat_obj@meta.data$seurat_clusters))
@@ -49,7 +50,9 @@ server <- function(input, output) {
   # returns the correct ID class for cell subset
   IDtype <- function() {
     seurat_obj <- SelectDataset()
-    if (input$Analysis == "neuromast-cells") {
+    #if (input$Analysis == "neuromast-cells" || input$Analysis == "ptime-regen" || input$Analysis == "ptime-regen") {
+    if(input$Analysis %in% multiple_idents_seurObj){
+      print("look here")
       seurat_obj@meta.data$cell.type.ident
     } else {
       seurat_obj@meta.data$seurat_clusters
@@ -134,7 +137,11 @@ server <- function(input, output) {
       umap_clusters <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                                label = TRUE, label.size = 0, group.by = "cell.type.ident",
                                cols = cluster_clrs)
-    } else {
+    } else if (input$Analysis == "ptime-regen" || input$Analysis == "ptime-homeo") {
+      umap_clusters <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
+                               label = TRUE, label.size = 0, group.by = "cell.type.ident.by.data.set",
+                               cols = gg_color_hue(length(levels(seurat_obj$cell.type.ident.by.data.set))))
+    }else {
       umap_clusters <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                                label = TRUE, label.size = 0, group.by = "seurat_clusters")
     }
@@ -294,20 +301,21 @@ server <- function(input, output) {
       clrs <- cluster_clrs
     }
     
+    #if (input$Analysis == "neuromast-cells" | input$Analysis == "ptime-regen" | input$Analysis == "ptime-regen"){
     g <- VlnPlot(seurat_obj, selected,
                  pt.size = input$ptSizeVln, combine = FALSE,
                  group.by = input$selectGrpVln, cols = clrs)
     
     for(k in 1:length(g)) {
       g[[k]] <- g[[k]] + theme(legend.position = "none")
-    }
+    #}
     
     pg <- plot_grid(plotlist = g, ncol = 1) +
       labs(title = paste("Selected analysis:",
                          as.character(input$Analysis)), subtitle = "", caption = "") +
       theme(plot.title = element_text(face = "bold", size = 15, hjust = 0))
-    if (input$Analysis != "neuromast-cells" && input$selectGrpVln == "cell.type.ident"){
-      print('hi')
+    }
+    if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpVln == "cell.type.ident"){
       g <- VlnPlot(seurat_obj, selected,
                    pt.size = input$ptSizeVln, combine = FALSE,
                    group.by = "seurat_clusters", cols = clrs)

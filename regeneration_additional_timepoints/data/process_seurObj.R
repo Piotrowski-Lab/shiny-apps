@@ -12,12 +12,7 @@ library(reshape2)
 if (TRUE) {
   setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
   
-  script_name <- "modify_seuratObj"
-  
-  date <-Sys.Date()
-  
-  figurePath <- function(filename, format){paste0(script_name, "_figures/", filename)}
-  
+  script_name <- "process_seurObj"
 }
 
 files <- list.files(".", pattern = "TRIMMED", full.names = TRUE)
@@ -78,4 +73,25 @@ for (i in 1:1){
   Idents(file_list[[i]]) <- "cell.type.ident"
   saveRDS(file_list[[i]], file = files[i])
   }
+
+# =============================== modify ptime regen objects
+readSeuratObj <- TRUE
+modifySeuratObj <-TRUE
+
+files <- files[7:8]
+file_list <- list()
+
+for (i in 1:length(files)) {
+  if (readSeuratObj){
+    print(paste0("reading: ", files[i]))
+    file_list[[i]] <- readRDS(files[i])
+    DefaultAssay(file_list[[i]]) <- "RNA"
+  }
+  if(modifySeuratObj){
+    print('hi')
+    names(file_list[[i]]@meta.data)[names(file_list[[i]]@meta.data) == "cell.type.and.trt"] <- "cell.type.ident.by.data.set"
+  }
+  print(paste0("saving: ", files[i]))
+  saveRDS(file_list[[i]], file = files[i])
+}
 
