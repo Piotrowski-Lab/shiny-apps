@@ -307,7 +307,6 @@ server <- function(input, output) {
                          as.character(input$Analysis)), subtitle = "", caption = "") +
       theme(plot.title = element_text(face = "bold", size = 15, hjust = 0))
     if (input$Analysis != "neuromast-cells" && input$selectGrpVln == "cell.type.ident"){
-      print('hi')
       g <- VlnPlot(seurat_obj, selected,
                    pt.size = input$ptSizeVln, combine = FALSE,
                    group.by = "seurat_clusters", cols = clrs)
@@ -957,7 +956,6 @@ server <- function(input, output) {
       
       #preserve identity order
       if (group.by == "cell.type.ident.by.data.set"){
-        print('hi')
         data$id <- factor(data$id, levels = levels(seurat_obj$cell.type.ident.by.data.set))
       }else if (group.by == "data.set"){
         data$id <- factor(data$id, levels = levels(seurat_obj$data.set))
