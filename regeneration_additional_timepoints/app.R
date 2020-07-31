@@ -38,7 +38,7 @@ getLenInput <- function(input) {
 		return(len)
 }
 
-	files <- list.files("./data", pattern = "TRIMMED", full.names = TRUE)
+files <- list.files("./data", pattern = "TRIMMED", full.names = TRUE)
 file_list <- list()
 
 	print("Loading Seurat objects...")
@@ -51,7 +51,8 @@ print("done.")
 
 # ! =========== items to check/change for project {START}
 
-names(file_list) <- as.character(c("all she-pos. cells"))
+names(file_list) <- as.character(c("neuromast-cells", "AP-cells", "central-cells",
+                                   "DV-cells", "HC-prog", "mantle-cells"))
 
 trt_colors <- c("green3", "gold", "darkorange", "red", "magenta",
 		"mediumpurple1", "lightseagreen", "deepskyblue", "blue")
@@ -76,13 +77,13 @@ com_name <- gene_df$Gene.name.uniq
 
 
 # =========== Server
-source(paste0("https://raw.githubusercontent.com/diazdc/shiny-apps-main/",
+source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps/",
 			branch, "/", app_name, "/app_server.R"), local = TRUE)
 
-# source(paste0("./app_server.R"), local = TRUE)
+#source(paste0("./app_server.R"), local = TRUE)
 
 # =========== UI
-source(paste0("https://raw.githubusercontent.com/diazdc/shiny-apps-main/",
+source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps/",
 			branch, "/", app_name, "/app_ui.R"), local = TRUE)
 
 # source(paste0("./app_ui.R"), local = TRUE)

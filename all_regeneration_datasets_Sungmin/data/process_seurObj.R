@@ -81,7 +81,7 @@ features <- c("atoh1a", "her4.1", "hes2.2", "dld", "sox4a*1", "myclb", "gadd45gb
               "insm1a", "wnt2", "sost", "sfrp1a", "pcna", "mki67", "isl1", "slc1a3a", "glula", "lfng", "cbln20", "ebf3a",
               "znf185", "si:ch211-229d2.5", "si:ch73-261i21.5", "spaca4l", "foxp4", "crip1")
 
-seurat_obj <- file_list[[6]]
+seurat_obj <- file_list[[1]]
 
 dotplot <- DotPlot(seurat_obj, features = features,
                    group.by = "cell.type.ident.by.data.set")
@@ -105,7 +105,7 @@ g
 
 "%||%" <- devtools:::`%||%`
 
-group.by <- "cell.type.ident.by.data.set"
+group.by <- "seurat_clusters"
 cells <- NULL
 col.min = -2.5
 col.max = 2.5
@@ -138,10 +138,11 @@ data <- melt(data, variable.name  = "Feature")
 #preserve identity order
 #group.by.f <- factor(group.by)
 if (group.by == "cell.type.ident.by.data.set"){
-  print('hi')
-data$id <- factor(data$id, levels = levels(seurat_obj$cell.type.ident.by.data.set))
+  data$id <- factor(data$id, levels = levels(seurat_obj$cell.type.ident.by.data.set))
 }else if (group.by == "data.set"){
   data$id <- factor(data$id, levels = levels(seurat_obj$data.set))
+}else if (group.by == "seurat_clusters"){
+  data$id <- factor(data$id, levels = levels(seurat_obj$seurat_clusters))
 }else{
   data$id <- factor(data$id, levels = levels(seurat_obj$cell.type.ident))
 }
