@@ -5,7 +5,7 @@ server <- function(input, output) {
     seurat_obj <- file_list[[input$Analysis]]
     print(names(file_list[input$Analysis]))
     
-    cluster_clrs <- gg_color_hue(
+    cluster_clrs <<- gg_color_hue(
       length(levels(seurat_obj@active.ident)))
     return(seurat_obj)
   })
@@ -294,7 +294,7 @@ server <- function(input, output) {
       clrs <- cluster_clrs
     }
     
-    # if (input$Analysis == "neuromast cells"){
+    if (input$Analysis == "neuromast-cells"){
     g <- VlnPlot(seurat_obj, selected,
                  pt.size = input$ptSizeVln, combine = FALSE,
                  group.by = input$selectGrpVln, cols = clrs)
@@ -307,20 +307,21 @@ server <- function(input, output) {
       labs(title = paste("Selected analysis:",
                          as.character(input$Analysis)), subtitle = "", caption = "") +
       theme(plot.title = element_text(face = "bold", size = 15, hjust = 0))
-    # } else{
-    #   g <- VlnPlot(seurat_obj, selected,
-    #                pt.size = input$ptSizeVln, combine = FALSE,
-    #                group.by = "seurat_clusters")
-    # 
-    #   for(k in 1:length(g)) {
-    #     g[[k]] <- g[[k]] + theme(legend.position = "none")
-    #   }
-    # 
-    #   pg <- plot_grid(plotlist = g, ncol = 1) +
-    #     labs(title = paste("Selected analysis:",
-    #                        as.character(input$Analysis)), subtitle = "", caption = "") +
-    #     theme(plot.title = element_text(face = "bold", size = 15, hjust = 0))
-    # }
+    }else{
+      print('hi')
+      g <- VlnPlot(seurat_obj, selected,
+                   pt.size = input$ptSizeVln, combine = FALSE,
+                   group.by = "seurat_clusters")
+
+      for(k in 1:length(g)) {
+        g[[k]] <- g[[k]] + theme(legend.position = "none")
+      }
+
+      pg <- plot_grid(plotlist = g, ncol = 1) +
+        labs(title = paste("Selected analysis:",
+                           as.character(input$Analysis)), subtitle = "", caption = "") +
+        theme(plot.title = element_text(face = "bold", size = 15, hjust = 0))
+    }
     return(pg)
   })
   
@@ -481,6 +482,8 @@ server <- function(input, output) {
       
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDot]
       
+      group.by <- input$selectGrpDot
+      
       seurat_obj_sub <- seurat_obj[rownames(seurat_obj) %in% selected,]
       dist_mat <- dist(seurat_obj_sub@assays$RNA@data)
       clust <- hclust(dist_mat)
@@ -504,32 +507,19 @@ server <- function(input, output) {
       
       g <- g + coord_flip() + theme(
         axis.text.x = element_text(angle = 90, hjust = 1))
+      if (input$Analysis != "neuromast-cells" && input$selectGrpDot == "cell.type.ident") {
+        g <- DotPlot(seurat_obj, features = selected,
+                     cols = "RdYlBu", dot.scale = input$dotScale,
+                     group.by = "seurat_clusters")
+        
+        g <- g + labs(title = paste("Selected analysis:",
+                                    as.character(input$Analysis)), subtitle = "", caption = "") +
+          theme(plot.title = element_text(face = "plain", size = 14))
+        
+        g <- g + coord_flip() + theme(
+          axis.text.x = element_text(angle = 90, hjust = 1))
+      }
       
-    # } else if (input$Analysis != "neuromast cells") {
-    #   print('Hi')
-    #   seurat_obj <- SelectDataset()
-    #   selected <- unlist(strsplit(input$dotGenes, " "))
-    #   
-    #   ifelse(selected %in% com_name,
-    #          selected <- selected[selected %in% com_name],
-    #          
-    #          ifelse(selected %in% ens_id,
-    #                 selected <- gene_df[ens_id %in% selected, 3],"")
-    #   )
-    #   
-    #   seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDot]
-    #   print(input$cellIdentsDot)
-    #   
-    #   g <- DotPlot(seurat_obj, features = selected,
-    #                cols = "RdYlBu", dot.scale = input$dotScale,
-    #                group.by = "seurat_clusters")
-    #   
-    #   g <- g + labs(title = paste("Selected analysis:",
-    #                               as.character(input$Analysis)), subtitle = "", caption = "") +
-    #     theme(plot.title = element_text(face = "plain", size = 14))
-    #   
-    #   g <- g + coord_flip() + theme(
-    #     axis.text.x = element_text(angle = 90, hjust = 1))
     } else{
       seurat_obj <- SelectDataset()
       selected <- unlist(strsplit(input$dotGenes, " "))
@@ -542,6 +532,9 @@ server <- function(input, output) {
       )
       
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDot]
+      
+      group.by <- input$selectGrpDot
+      
       print(input$cellIdentsDot)
 
       g <- DotPlot(seurat_obj, features = selected,
@@ -554,6 +547,19 @@ server <- function(input, output) {
       
       g <- g + coord_flip() + theme(
         axis.text.x = element_text(angle = 90, hjust = 1))
+      if (input$Analysis != "neuromast-cells" && input$selectGrpDot == "cell.type.ident") {
+        g <- DotPlot(seurat_obj, features = selected,
+                     cols = "RdYlBu", dot.scale = input$dotScale,
+                     group.by = "seurat_clusters")
+
+        g <- g + labs(title = paste("Selected analysis:",
+                                    as.character(input$Analysis)), subtitle = "", caption = "") +
+          theme(plot.title = element_text(face = "plain", size = 14))
+
+        g <- g + coord_flip() + theme(
+          axis.text.x = element_text(angle = 90, hjust = 1))
+      }
+      
     } 
     return(g)
   })
