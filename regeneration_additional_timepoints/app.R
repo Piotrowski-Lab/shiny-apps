@@ -51,7 +51,7 @@ print("done.")
 
 # ! =========== items to check/change for project {START}
 
-names(file_list) <- as.character(c("neuromast cells", "AP-cells", "central-cells",
+names(file_list) <- as.character(c("neuromast-cells", "AP-cells", "central-cells",
                                    "DV-cells", "HC-prog", "mantle-cells"))
 
 trt_colors <- c("green3", "gold", "darkorange", "red", "magenta",

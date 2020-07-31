@@ -34,7 +34,7 @@ server <- function(input, output) {
   printIdents <- reactive({
     seurat_obj <- SelectDataset()
     print(seurat_obj)
-    if (input$Analysis == "neuromast cells") {
+    if (input$Analysis == "neuromast-cells") {
       sort(unique(seurat_obj@meta.data$cell.type.ident))
     } else {
       sort(unique(seurat_obj@meta.data$seurat_clusters))
@@ -49,7 +49,7 @@ server <- function(input, output) {
   # returns the correct ID class for cell subset
   IDtype <- function() {
     seurat_obj <- SelectDataset()
-    if (input$Analysis == "neuromast cells") {
+    if (input$Analysis == "neuromast-cells") {
       seurat_obj@meta.data$cell.type.ident
     } else {
       seurat_obj@meta.data$seurat_clusters
@@ -129,9 +129,8 @@ server <- function(input, output) {
   DatFeatPlotF <- function() {
     
     seurat_obj <- SelectDataset()
-    print(paste0("look here: ", input$Analysis))
-    
-    if (input$Analysis == "neuromast cells") {
+
+    if (input$Analysis == "neuromast-cells") {
       umap_clusters <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                                label = TRUE, label.size = 0, group.by = "cell.type.ident",
                                cols = cluster_clrs)
@@ -295,7 +294,7 @@ server <- function(input, output) {
       clrs <- cluster_clrs
     }
     
-    if (input$Analysis == "neuromast cells"){
+    # if (input$Analysis == "neuromast cells"){
     g <- VlnPlot(seurat_obj, selected,
                  pt.size = input$ptSizeVln, combine = FALSE,
                  group.by = input$selectGrpVln, cols = clrs)
@@ -308,20 +307,20 @@ server <- function(input, output) {
       labs(title = paste("Selected analysis:",
                          as.character(input$Analysis)), subtitle = "", caption = "") +
       theme(plot.title = element_text(face = "bold", size = 15, hjust = 0))
-    } else{
-      g <- VlnPlot(seurat_obj, selected,
-                   pt.size = input$ptSizeVln, combine = FALSE,
-                   group.by = "seurat_clusters", cols = clrs)
-      
-      for(k in 1:length(g)) {
-        g[[k]] <- g[[k]] + theme(legend.position = "none")
-      }
-      
-      pg <- plot_grid(plotlist = g, ncol = 1) +
-        labs(title = paste("Selected analysis:",
-                           as.character(input$Analysis)), subtitle = "", caption = "") +
-        theme(plot.title = element_text(face = "bold", size = 15, hjust = 0))
-    }
+    # } else{
+    #   g <- VlnPlot(seurat_obj, selected,
+    #                pt.size = input$ptSizeVln, combine = FALSE,
+    #                group.by = "seurat_clusters")
+    # 
+    #   for(k in 1:length(g)) {
+    #     g[[k]] <- g[[k]] + theme(legend.position = "none")
+    #   }
+    # 
+    #   pg <- plot_grid(plotlist = g, ncol = 1) +
+    #     labs(title = paste("Selected analysis:",
+    #                        as.character(input$Analysis)), subtitle = "", caption = "") +
+    #     theme(plot.title = element_text(face = "bold", size = 15, hjust = 0))
+    # }
     return(pg)
   })
   
@@ -506,31 +505,31 @@ server <- function(input, output) {
       g <- g + coord_flip() + theme(
         axis.text.x = element_text(angle = 90, hjust = 1))
       
-    } else if (input$Analysis != "neuromast cells") {
-      print('Hi')
-      seurat_obj <- SelectDataset()
-      selected <- unlist(strsplit(input$dotGenes, " "))
-      
-      ifelse(selected %in% com_name,
-             selected <- selected[selected %in% com_name],
-             
-             ifelse(selected %in% ens_id,
-                    selected <- gene_df[ens_id %in% selected, 3],"")
-      )
-      
-      seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDot]
-      print(input$cellIdentsDot)
-      
-      g <- DotPlot(seurat_obj, features = selected,
-                   cols = "RdYlBu", dot.scale = input$dotScale,
-                   group.by = "seurat_clusters")
-      
-      g <- g + labs(title = paste("Selected analysis:",
-                                  as.character(input$Analysis)), subtitle = "", caption = "") +
-        theme(plot.title = element_text(face = "plain", size = 14))
-      
-      g <- g + coord_flip() + theme(
-        axis.text.x = element_text(angle = 90, hjust = 1))
+    # } else if (input$Analysis != "neuromast cells") {
+    #   print('Hi')
+    #   seurat_obj <- SelectDataset()
+    #   selected <- unlist(strsplit(input$dotGenes, " "))
+    #   
+    #   ifelse(selected %in% com_name,
+    #          selected <- selected[selected %in% com_name],
+    #          
+    #          ifelse(selected %in% ens_id,
+    #                 selected <- gene_df[ens_id %in% selected, 3],"")
+    #   )
+    #   
+    #   seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDot]
+    #   print(input$cellIdentsDot)
+    #   
+    #   g <- DotPlot(seurat_obj, features = selected,
+    #                cols = "RdYlBu", dot.scale = input$dotScale,
+    #                group.by = "seurat_clusters")
+    #   
+    #   g <- g + labs(title = paste("Selected analysis:",
+    #                               as.character(input$Analysis)), subtitle = "", caption = "") +
+    #     theme(plot.title = element_text(face = "plain", size = 14))
+    #   
+    #   g <- g + coord_flip() + theme(
+    #     axis.text.x = element_text(angle = 90, hjust = 1))
     } else{
       seurat_obj <- SelectDataset()
       selected <- unlist(strsplit(input$dotGenes, " "))
@@ -626,7 +625,7 @@ server <- function(input, output) {
   })
   
   output$downloadDotPlot <- downloadHandler(
-    filename = "dot_plot.pdf", content = function(file) {
+    filename = "dot_plot.png", content = function(file) {
       png(file, height = as.numeric(input$manAdjustDotH),
           width = as.numeric(input$manAdjustDotW), units = "px")
       print(DotPlotF())
@@ -749,13 +748,18 @@ server <- function(input, output) {
       dotplot <- DotPlot(seurat_obj, features = markers_clust,
                          group.by = input$selectGrpHmap)
       
+      dotplot$data$groupIdent <- gsub("(.+?)(\\_.*)", "\\1",dotplot$data$id)
+      dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
+      
       g <- ggplot(dotplot$data, aes(id, features.plot, fill= avg.exp.scaled)) +
         geom_tile(color = "gray", size = 1) +
         scale_fill_distiller(
           palette = "RdYlBu") +
         theme_ipsum() +
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1),
-              strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12))
+        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
+              axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
+              strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
+        facet_grid( ~ groupIdent, scales='free_x')
       
       
       g <- g + labs(title = paste("Selected analysis:",
@@ -780,6 +784,9 @@ server <- function(input, output) {
       dotplot <- DotPlot(seurat_obj, features = selected,
                          group.by = input$selectGrpHmap)
       
+      dotplot$data$groupIdent <- gsub("(.+?)(\\_.*)", "\\1",dotplot$data$id)
+      dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
+      
       g <- ggplot(dotplot$data, aes(id, features.plot,fill= avg.exp.scaled, width = 1, height = 1)) +
         geom_tile(color = "gray", size = 1) +
         scale_fill_distiller(
@@ -792,31 +799,29 @@ server <- function(input, output) {
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
         theme(plot.title = element_text(face = "plain", size = 14))
-      
-    }
-    
-    if (input$selectGrpHmap == "cell.type.ident.by.data.set"){
-      
-      dotplot <- DotPlot(seurat_obj, features = selected,
-                         group.by = input$selectGrpHmap)
-      
-      dotplot$data$groupIdent <- gsub("(.+?)(\\_.*)", "\\1",dotplot$data$id)
-      dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
-      
-      g <- ggplot(dotplot$data, aes(id, features.plot,fill= avg.exp.scaled, width = 1, height = 1)) +
-        geom_tile(color = "gray", size = 1) +
-        scale_fill_distiller(
-          palette = "RdYlBu") +
-        theme_ipsum()+
-        theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
-              axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
-              strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
-        facet_grid( ~ groupIdent, scales='free_x')
-      
-      
-      g <- g + labs(title = paste("Selected analysis:",
-                                  as.character(input$Analysis)), subtitle = "", caption = "") +
-        theme(plot.title = element_text(face = "plain", size = 14))
+      if (input$selectGrpHmap == "cell.type.ident.by.data.set"){
+        
+        dotplot <- DotPlot(seurat_obj, features = selected,
+                           group.by = input$selectGrpHmap)
+        
+        dotplot$data$groupIdent <- gsub("(.+?)(\\_.*)", "\\1",dotplot$data$id)
+        dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
+        
+        g <- ggplot(dotplot$data, aes(id, features.plot,fill= avg.exp.scaled, width = 1, height = 1)) +
+          geom_tile(color = "gray", size = 1) +
+          scale_fill_distiller(
+            palette = "RdYlBu") +
+          theme_ipsum()+
+          theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
+                axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
+                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
+          facet_grid( ~ groupIdent, scales='free_x')
+        
+        
+        g <- g + labs(title = paste("Selected analysis:",
+                                    as.character(input$Analysis)), subtitle = "", caption = "") +
+          theme(plot.title = element_text(face = "plain", size = 14))
+      }
     }
     
     return(g)
@@ -951,6 +956,8 @@ server <- function(input, output) {
         data$id <- factor(data$id, levels = levels(seurat_obj$cell.type.ident.by.data.set))
       }else if (group.by == "data.set"){
         data$id <- factor(data$id, levels = levels(seurat_obj$data.set))
+      }else if (group.by == "seurat_clusters"){
+        data$id <- factor(data$id, levels = levels(seurat_obj$seurat_clusters))
       }else{
         data$id <- factor(data$id, levels = levels(seurat_obj$cell.type.ident))
       }
@@ -965,6 +972,10 @@ server <- function(input, output) {
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
               strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
         facet_grid( ~ id, space = 'free', scales = 'free')
+      
+      g <- g + labs(title = paste("Selected analysis:",
+                                  as.character(input$Analysis)), subtitle = "", caption = "") +
+        theme(plot.title = element_text(face = "plain", size = 14))
       
     } else {
       seurat_obj <- SelectDataset()
@@ -1018,7 +1029,9 @@ server <- function(input, output) {
         data$id <- factor(data$id, levels = levels(seurat_obj$cell.type.ident.by.data.set))
       }else if (group.by == "data.set"){
         data$id <- factor(data$id, levels = levels(seurat_obj$data.set))
-      }else{
+      }else if (group.by == "seurat_clusters"){
+        data$id <- factor(data$id, levels = levels(seurat_obj$seurat_clusters))
+        }else{
         data$id <- factor(data$id, levels = levels(seurat_obj$cell.type.ident))
       }
       
@@ -1033,6 +1046,9 @@ server <- function(input, output) {
               strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
         facet_grid( ~ id, space = 'free', scales = 'free')
       
+      g <- g + labs(title = paste("Selected analysis:",
+                                  as.character(input$Analysis)), subtitle = "", caption = "") +
+        theme(plot.title = element_text(face = "plain", size = 14))
       
     }
     return(g)

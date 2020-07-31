@@ -213,14 +213,21 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 					column(12, tags$br()),
 					column(12, align = "center",
 						column(6,
+						   conditionalPanel(
+						         condition = "input.Analysis == 'neuromast-cells'",
 							radioGroupButtons("selectGrpVln",
 								"Group cells by:", choices = list(Time = "data.set",
-									Cluster = "cell.type.ident"), width = "100%")),
+									Cluster = "cell.type.ident"), width = "100%",selected = "data.set")),
+							conditionalPanel(
+							  condition = "input.Analysis !== 'neuromast-cells'",
+							 radioGroupButtons("selectGrpVln",
+							 "Group cells by:", choices = list(Time = "data.set",
+							Cluster = "seurat_clusters"), width = "100%",selected = "data.set"))),
 						column(6,
 							numericInput("ptSizeVln", "Input cell size:", value = 0.25,
 								min = 0.00, step = 0.75, max = 2.00, width = "80%"))
-					      ),
-
+				      ),
+			
 					fluidRow(tags$br()),
 					fluidRow(tags$br()),
 					column(12, uiOutput("plot.uiDatFeatPlotV2"), align = "center"),
@@ -325,7 +332,8 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 								radioGroupButtons("selectGrpDot",
 									"Group cells by:", choices = list(
 										Combined = "cell.type.ident.by.data.set",
-										Time = "data.set",Cluster = "cell.type.ident"), width = "100%",size = "xs")),
+										Time = "data.set", Cluster = ifelse("input.Analysis == 'neuromast-cells'","cell.type.ident", "seurat_clusters")), 
+									width = "100%",size = "xs")),
 							column(6,
 								numericInput("dotScale", "Dot diameter:", value = 10, min = 4,
 									step = 1, max = 20, width = "60%"), align = "center")
@@ -396,7 +404,7 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 											"Group cells by:",
 											choices = list(Combined = "cell.type.ident.by.data.set",
 												Time = "data.set",
-												Cluster = "cell.type.ident"),
+												Cluster = ifelse("input.Analysis" == "neuromast-cells","cell.type.ident", "seurat_clusters")),
 											width = "100%"))
 
 							      ),
@@ -462,7 +470,7 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 								radioGroupButtons("selectGrpIndvHmap",
 									"Group cells by:",
 									choices = list(
-										Cluster = "cell.type.ident",
+										Cluster = ifelse("input.Analysis" == "neuromast-cells","cell.type.ident", "seurat_clusters"),
 										Time = "data.set",
 										Combined = "cell.type.ident.by.data.set"),
 									width = "100%"))
