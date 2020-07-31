@@ -125,7 +125,7 @@ server <- function(input, output) {
   
   output$myDatasetPlotF <- renderPlot({DatasetPlotF()})
   output$plot.uiDatasetPlotF <- renderUI({plotOutput("myDatasetPlotF",
-                                                     width = "600px", height = "500px")})
+                                                     width = "700px", height = "500px")})
   
   
   # ======== Cluster/Data UMAP ======== #
@@ -150,7 +150,8 @@ server <- function(input, output) {
       theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
             axis.line.x = element_blank(), axis.text.y = element_blank(),
             axis.ticks.y = element_blank(), axis.line.y = element_blank(),
-            axis.title = element_text(size = 12), legend.position="bottom")
+            axis.title = element_text(size = 12), legend.position="bottom", legend.justification = "center") +
+            guides(col = guide_legend(ncol = 4,override.aes = list(size=3))) 
     
     umap_dataset <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                             label = TRUE, label.size = 0, group.by = "data.set", cols = trt_colors)
@@ -159,7 +160,7 @@ server <- function(input, output) {
       theme(axis.text.x = element_blank(), axis.ticks.x = element_blank(),
             axis.line.x = element_blank(), axis.text.y = element_blank(),
             axis.ticks.y = element_blank(), axis.line.y = element_blank(),
-            axis.title = element_text(size = 12), legend.position = "bottom")
+            axis.title = element_text(size = 12), legend.position = "bottom", legend.justification = "center")
     
     datfeat_list <- list(umap_clusters, umap_dataset)
     plot_h <- plot_grid(plotlist = datfeat_list, ncol = 2)
@@ -174,7 +175,7 @@ server <- function(input, output) {
   
   output$myDatFeatPlotH1 <- renderPlot({DatFeatPlotF()[[1]]})
   output$plot.uiDatFeatPlotH1 <- renderUI({
-    plotOutput("myDatFeatPlotH1", width = "850px", height = "450px")
+    plotOutput("myDatFeatPlotH1", width = "925px", height = "525px")
   })
   
   n_panels <- 1:8
@@ -297,7 +298,9 @@ server <- function(input, output) {
     
     if(input$selectGrpVln == "data.set") {
       clrs <- trt_colors
-    } else {
+    } else if (input$selectGrpVln == "cell.type.ident.by.data.set"){
+      clrs <-gg_color_hue(length(levels(seurat_obj$cell.type.ident.by.data.set)))
+    }else {
       clrs <- cluster_clrs
     }
     
@@ -514,7 +517,7 @@ server <- function(input, output) {
       
       g <- g + coord_flip() + theme(
         axis.text.x = element_text(angle = 90, hjust = 1))
-      if (input$Analysis != "neuromast-cells" && input$selectGrpDot == "cell.type.ident") {
+      if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpDot == "cell.type.ident") {
         g <- DotPlot(seurat_obj, features = selected,
                      cols = "RdYlBu", dot.scale = input$dotScale,
                      group.by = "seurat_clusters")
@@ -554,7 +557,7 @@ server <- function(input, output) {
       
       g <- g + coord_flip() + theme(
         axis.text.x = element_text(angle = 90, hjust = 1))
-      if (input$Analysis != "neuromast-cells" && input$selectGrpDot == "cell.type.ident") {
+      if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpDot == "cell.type.ident") {
         g <- DotPlot(seurat_obj, features = selected,
                      cols = "RdYlBu", dot.scale = input$dotScale,
                      group.by = "seurat_clusters")
@@ -806,16 +809,43 @@ server <- function(input, output) {
           palette = "RdYlBu") +
         theme_ipsum()+
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
-              axis.title.y.right = element_text(size=13),
-              strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12))
-      
+                        axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
+                        strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
+                  facet_grid( ~ groupIdent, scales='free_x')
+        # theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
+        #       axis.title.y.right = element_text(size=13),
+        #       strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12))
+        # 
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
         theme(plot.title = element_text(face = "plain", size = 14))
-      if (input$selectGrpHmap == "cell.type.ident.by.data.set"){
-        
+      
+      # if (input$selectGrpHmap == "cell.type.ident.by.data.set"){
+      #   
+      #   dotplot <- DotPlot(seurat_obj, features = selected,
+      #                      group.by = input$selectGrpHmap)
+      #   
+      #   dotplot$data$groupIdent <- gsub("(.+?)(\\_.*)", "\\1",dotplot$data$id)
+      #   dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
+      #   
+      #   g <- ggplot(dotplot$data, aes(id, features.plot,fill= avg.exp.scaled, width = 1, height = 1)) +
+      #     geom_tile(color = "gray", size = 1) +
+      #     scale_fill_distiller(
+      #       palette = "RdYlBu") +
+      #     theme_ipsum()+
+      #     theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
+      #           axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
+      #           strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
+      #     facet_grid( ~ groupIdent, scales='free_x')
+      #   
+      #   
+      #   g <- g + labs(title = paste("Selected analysis:",
+      #                               as.character(input$Analysis)), subtitle = "", caption = "") +
+      #     theme(plot.title = element_text(face = "plain", size = 14))
+      # }else 
+        if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpHmap == "cell.type.ident"){
         dotplot <- DotPlot(seurat_obj, features = selected,
-                           group.by = input$selectGrpHmap)
+                           group.by = "seurat_clusters")
         
         dotplot$data$groupIdent <- gsub("(.+?)(\\_.*)", "\\1",dotplot$data$id)
         dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
@@ -826,15 +856,14 @@ server <- function(input, output) {
             palette = "RdYlBu") +
           theme_ipsum()+
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
-                axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
-                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
-          facet_grid( ~ groupIdent, scales='free_x')
-        
+                axis.title.y.right = element_text(size=13),
+                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12))
         
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
           theme(plot.title = element_text(face = "plain", size = 14))
       }
+      
     }
     
     return(g)
@@ -989,7 +1018,7 @@ server <- function(input, output) {
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
         theme(plot.title = element_text(face = "plain", size = 14))
-      if (input$Analysis != "neuromast-cells" && input$selectGrpIndvHmap == "cell.type.ident"){
+      if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpIndvHmap == "cell.type.ident"){
         group.by <- "seurat_clusters" #choose group.by parameter
         cells <- NULL
         col.min = -2.5
@@ -1117,7 +1146,7 @@ server <- function(input, output) {
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
         theme(plot.title = element_text(face = "plain", size = 14))
       
-      if (input$Analysis != "neuromast-cells" && input$selectGrpIndvHmap == "cell.type.ident"){
+      if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpIndvHmap == "cell.type.ident"){
         group.by <- "seurat_clusters" #choose group.by parameter
         cells <- NULL
         col.min = -2.5
