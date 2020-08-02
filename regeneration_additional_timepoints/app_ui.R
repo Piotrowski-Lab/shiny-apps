@@ -216,8 +216,8 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 					# 	   conditionalPanel(
 					# 	         condition = "input.Analysis == 'neuromast-cells'",
 							radioGroupButtons("selectGrpVln",
-								"Group cells by:", choices = list(Time = "data.set",
-								 Cluster = "cell.type.ident"), width = "100%")),
+								"Group cells by:", choices = list(Combined = "cell.type.ident.by.data.set",
+								 Time = "data.set", Cluster = "cell.type.ident"), width = "100%",size = "xs")),
 							# conditionalPanel(
 							#   condition = "input.Analysis !== 'neuromast-cells'",
 							#  radioGroupButtons("selectGrpVln",
@@ -408,8 +408,7 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 										radioGroupButtons("selectGrpHmap",
 											"Group cells by:",
 											choices = list(Combined = "cell.type.ident.by.data.set",
-												Time = "data.set",
-												Cluster = ifelse("input.Analysis" == "neuromast-cells","cell.type.ident", "seurat_clusters")),
+												Time = "data.set",Cluster = "cell.type.ident"),
 											width = "100%"))
 
 							      ),

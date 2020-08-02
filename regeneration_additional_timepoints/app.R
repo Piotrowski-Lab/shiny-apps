@@ -10,6 +10,8 @@ library(hrbrthemes)
 library(reshape2)
 
 	"%||%" <- devtools:::`%||%`
+	
+	`%notin%` <- Negate(`%in%`)
 
 	multiGrep2 <- function(toMatch, toSearch, ...) {
 		toMatch <- ifelse(grepl("*", toMatch),
@@ -52,10 +54,13 @@ print("done.")
 # ! =========== items to check/change for project {START}
 
 names(file_list) <- as.character(c("neuromast-cells", "AP-cells", "central-cells",
-                                   "DV-cells", "HC-prog", "mantle-cells"))
+                                   "DV-cells", "HC-prog", "mantle-cells", "ptime-regen", "ptime-homeo"))
+
+multiple_idents_seurObj <- as.character(c("neuromast-cells","ptime-regen", "ptime-homeo"))
 
 trt_colors <- c("green3", "gold", "darkorange", "red", "magenta",
 		"mediumpurple1", "lightseagreen", "deepskyblue", "blue")
+
 
 smpl_genes_sm <- paste0("atoh1a her4.1")
 smpl_genes_lg <- paste0("atoh1a her4.1 hes2.2 dld sox4a*1 myclb gadd45gb.1",
