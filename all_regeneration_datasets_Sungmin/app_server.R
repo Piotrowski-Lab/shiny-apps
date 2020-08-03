@@ -34,7 +34,6 @@ server <- function(input, output) {
   printIdents <- reactive({
     seurat_obj <- SelectDataset()
     print(seurat_obj)
-    #if (input$Analysis == "neuromast-cells"|| input$Analysis == "ptime-regen" || input$Analysis == "ptime-regen") {
     if(input$Analysis %in% multiple_idents_seurObj){
       sort(unique(seurat_obj@meta.data$cell.type.ident))
     } else {
@@ -50,9 +49,7 @@ server <- function(input, output) {
   # returns the correct ID class for cell subset
   IDtype <- function() {
     seurat_obj <- SelectDataset()
-    #if (input$Analysis == "neuromast-cells" || input$Analysis == "ptime-regen" || input$Analysis == "ptime-regen") {
     if(input$Analysis %in% multiple_idents_seurObj){
-      print("look here")
       seurat_obj@meta.data$cell.type.ident
     } else {
       seurat_obj@meta.data$seurat_clusters
@@ -300,7 +297,6 @@ server <- function(input, output) {
       clrs <- cluster_clrs
     }
     
-    #if (input$Analysis == "neuromast-cells" | input$Analysis == "ptime-regen" | input$Analysis == "ptime-regen"){
     g <- VlnPlot(seurat_obj, selected,
                  pt.size = input$ptSizeVln, combine = FALSE,
                  group.by = input$selectGrpVln, cols = clrs)
@@ -955,7 +951,8 @@ server <- function(input, output) {
       
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsIndvHmap]
       
-      seurat_obj <- seurat_obj[, sample(Cells(seurat_obj), size = round(as.numeric(input$cellDownSampleIndvHmap)*length(colnames(seurat_obj))), replace=F)]
+      seurat_obj <- seurat_obj[, sample(Cells(seurat_obj), 
+      size = round(as.numeric(input$cellDownSampleIndvHmap)*length(colnames(seurat_obj))), replace=F)]
       
       print(addmargins(table(seurat_obj$cell.type.ident))) #check
       
@@ -1085,7 +1082,8 @@ server <- function(input, output) {
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsIndvHmap]
       print(input$cellIdentsIndvHmap)
       
-      seurat_obj <- seurat_obj[, sample(Cells(seurat_obj), size = round(as.numeric(input$cellDownSampleIndvHmap)*length(colnames(seurat_obj))), replace=F)]
+      seurat_obj <- seurat_obj[, sample(Cells(seurat_obj),
+      size = round(as.numeric(input$cellDownSampleIndvHmap)*length(colnames(seurat_obj))), replace=F)]
       
       print(input$cellDownSampleIndvHmap)
       print(addmargins(table(seurat_obj$cell.type.ident))) #check
