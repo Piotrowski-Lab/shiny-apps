@@ -317,13 +317,11 @@ server <- function(input, output) {
       labs(title = paste("Selected analysis:",
                          as.character(input$Analysis)), subtitle = "", caption = "") +
       theme(plot.title = element_text(face = "bold", size = 15, hjust = 0))
-<<<<<<< HEAD
-    if (input$Analysis != "neuromast-cells" && input$selectGrpVln == "cell.type.ident"){
-=======
+
     }
     if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpVln == "cell.type.ident"){
->>>>>>> develop
-      g <- VlnPlot(seurat_obj, selected,
+
+            g <- VlnPlot(seurat_obj, selected,
                    pt.size = input$ptSizeVln, combine = FALSE,
                    group.by = "seurat_clusters", cols = clrs)
 

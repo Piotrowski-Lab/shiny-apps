@@ -28,7 +28,7 @@ cell.type <- c("mature-HCs","young-HCs","HC-prog" ,"central-cells", "DV-cells","
 treatments <- c("homeo" ,"0min" , "30min", "1hr", "3hr","5hr", "10hr")
 
 readSeuratObj <- TRUE
-modifySeuratObj <-FALSE
+modifySeuratObj <-TRUE
 
 for (i in 1:length(files)) {
   if (readSeuratObj){
@@ -49,9 +49,11 @@ for (i in 1:length(files)) {
     print(files[i])
     file_list[[i]]@meta.data$cell.type.ident.by.data.set <- factor(paste(file_list[[i]]@meta.data$cell_type,
                                                                   file_list[[i]]@meta.data$data.set,sep="_"))
-    if ("early-HCs" %in% file_list[[i]]$cell_type){
-      file_list[[i]]@meta.data$cell_type <- plyr::revalue(
-        file_list[[i]]@meta.data$cell_type, c("early-HCs" = "young-HCs"))
+    #change col name
+    names(file_list[[i]]@meta.data)[which(names(file_list[[i]]@meta.data) == "cell_type")] <- "cell.type.ident"
+    if ("early-HCs" %in% file_list[[i]]$cell.type.ident){
+      file_list[[i]]@meta.data$cell.type.ident <- plyr::revalue(
+        file_list[[i]]@meta.data$cell.type.ident, c("early-HCs" = "young-HCs"))
     }
   }
   file_list[[i]]$cell.type.ident.by.data.set <- factor(file_list[[i]]$cell.type.ident.by.data.set)

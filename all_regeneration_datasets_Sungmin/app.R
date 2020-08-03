@@ -11,6 +11,8 @@ library(reshape2)
 
 "%||%" <- devtools:::`%||%`
 
+`%notin%` <- Negate(`%in%`)
+
 multiGrep2 <- function(toMatch, toSearch, ...) {
   toMatch <- ifelse(grepl("*", toMatch),
     gsub("\\*","\\\\*", toMatch), toMatch <- toMatch)
@@ -48,24 +50,27 @@ for (i in 1:length(files)) {
 }
 print("done.")
 
-hmap_files <- list.files("./data", pattern = "mtx", full.names = TRUE)
-hmap_list <- list()
-
-print("Loading heatmap matrices...")
-for (i in 1:length(hmap_files)) {
-  hmap_list[[i]] <- readRDS(hmap_files[i])
-}
-print("done.")
+# hmap_files <- list.files("./data", pattern = "mtx", full.names = TRUE)
+# hmap_list <- list()
+# 
+# print("Loading heatmap matrices...")
+# for (i in 1:length(hmap_files)) {
+#   hmap_list[[i]] <- readRDS(hmap_files[i])
+# }
+# print("done.")
 
 
 # ! =========== items to check/change for project {START}
 file_list <- file_list[c(6,5,1:4)]
-hmap_list <- hmap_list[c(2,1,3)]
+# hmap_list <- hmap_list[c(2,1,3)]
 
 names(file_list) <- as.character(c(
   "all she-pos. cells", "neuromast cells","AP cells",
   "central cells", "HC progenitors", "mantle cells"))
-names(hmap_list) <- as.character(c("LOG", "CLR", "RC"))
+
+multiple_idents_seurObj <- as.character(c("all she-pos. cells", "neuromast cells"))
+
+# names(hmap_list) <- as.character(c("LOG", "CLR", "RC"))
 
 trt_colors <- c("green3", "gold", "darkorange",
   "deeppink", "mediumorchid1", "deepskyblue", "blue")
@@ -91,14 +96,14 @@ com_name <- gene_df$Gene.name.uniq
 
 
 # =========== server
-source(paste0("https://raw.githubusercontent.com/diazdc/shiny-apps-main/",
+source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps/",
   branch, "/", app_name, "/app_server.R"), local = TRUE)
 
 # source(paste0("./app_server.R"), local = TRUE)
 
 
 # =========== UI
-source(paste0("https://raw.githubusercontent.com/diazdc/shiny-apps-main/",
+source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps/",
   branch, "/", app_name, "/app_ui.R"), local = TRUE)
 
 # source(paste0("./app_ui.R"), local = TRUE)
