@@ -24,15 +24,14 @@ print(object.size(combined_obj), units = "MB") #after
 
 
 # =================================================== add new objects 
-files <- files[2:3]
+files <- files[2]
 combined_obj <- list()
 
 for (i in 1:length(files)){
   print(files[i])
   combined_obj[[i]] <- readRDS(files[i]) #combined seurat list
 }
-combined_obj <- list("SeurObj_ptime_subset_experiments_seurat3_v1.5_" = combined_obj[[1]],
-                  "SeurObj_ptime_subset_homeo_seurat3_v1.0_" = combined_obj[[2]])
+combined_obj <- list("SeurObj_ptime_subset_experiments_seurat3_v1.4.1_" = combined_obj[[1]])
 
 print(object.size(combined_obj), units = "MB") #before
 
