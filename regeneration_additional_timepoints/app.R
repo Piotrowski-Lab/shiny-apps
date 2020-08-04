@@ -54,9 +54,9 @@ print("done.")
 # ! =========== items to check/change for project {START}
 
 names(file_list) <- as.character(c("neuromast-cells", "AP-cells", "central-cells",
-                                   "DV-cells", "HC-prog", "mantle-cells", "ptime-regen", "ptime-homeo"))
+                                   "DV-cells", "HC-prog", "mantle-cells", "HC-lineage-homeo-and-regen","HC-lineage-regen", "HC-lineage-homeo"))
 
-multiple_idents_seurObj <- as.character(c("neuromast-cells","ptime-regen", "ptime-homeo"))
+multiple_idents_seurObj <- as.character(c("neuromast-cells","HC-lineage-homeo-and-regen","HC-lineage-regen", "HC-lineage-homeo"))
 
 trt_colors <- c("green3", "gold", "darkorange", "red", "magenta",
 		"mediumpurple1", "lightseagreen", "deepskyblue", "blue")
@@ -82,16 +82,16 @@ com_name <- gene_df$Gene.name.uniq
 
 
 # =========== Server
-source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps/",
-			branch, "/", app_name, "/app_server.R"), local = TRUE)
+# source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps/",
+# 			branch, "/", app_name, "/app_server.R"), local = TRUE)
 
-#source(paste0("./app_server.R"), local = TRUE)
+source(paste0("./app_server.R"), local = TRUE)
 
 # =========== UI
-source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps/",
-			branch, "/", app_name, "/app_ui.R"), local = TRUE)
+# source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps/",
+# 			branch, "/", app_name, "/app_ui.R"), local = TRUE)
 
-# source(paste0("./app_ui.R"), local = TRUE)
+source(paste0("./app_ui.R"), local = TRUE)
 
 print("Size of all Seurat objects:")
 print(object.size(file_list), units = "MB")

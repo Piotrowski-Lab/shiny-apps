@@ -34,7 +34,6 @@ server <- function(input, output) {
   printIdents <- reactive({
     seurat_obj <- SelectDataset()
     print(seurat_obj)
-    #if (input$Analysis == "neuromast-cells"|| input$Analysis == "ptime-regen" || input$Analysis == "ptime-regen") {
     if(input$Analysis %in% multiple_idents_seurObj){
       sort(unique(seurat_obj@meta.data$cell.type.ident))
     } else {
@@ -50,9 +49,7 @@ server <- function(input, output) {
   # returns the correct ID class for cell subset
   IDtype <- function() {
     seurat_obj <- SelectDataset()
-    #if (input$Analysis == "neuromast-cells" || input$Analysis == "ptime-regen" || input$Analysis == "ptime-regen") {
     if(input$Analysis %in% multiple_idents_seurObj){
-      print("look here")
       seurat_obj@meta.data$cell.type.ident
     } else {
       seurat_obj@meta.data$seurat_clusters
@@ -137,7 +134,7 @@ server <- function(input, output) {
       umap_clusters <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                                label = TRUE, label.size = 0, group.by = "cell.type.ident",
                                cols = cluster_clrs)
-    } else if (input$Analysis == "ptime-regen" || input$Analysis == "ptime-homeo") {
+    } else if (input$Analysis == "HC-lineage-regen" || input$Analysis == "HC-lineage-homeo" || input$Analysis == "HC-lineage-homeo-and-regen") {
       umap_clusters <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                                label = TRUE, label.size = 0, group.by = "cell.type.ident.by.data.set",
                                cols = gg_color_hue(length(levels(seurat_obj$cell.type.ident.by.data.set))))
@@ -768,6 +765,12 @@ server <- function(input, output) {
       
       dotplot$data$groupIdent <- gsub("(.+?)(\\_.*)", "\\1",dotplot$data$id)
       dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
+      
+      #applies to ptime objects
+      if(input$Analysis %in% multiple_idents_seurObj[2:4]){
+        dotplot$data$groupIdent <- gsub("^.*\\.", "",dotplot$data$id)
+        dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
+      }
       
       g <- ggplot(dotplot$data, aes(id, features.plot, fill= avg.exp.scaled)) +
         geom_tile(color = "gray", size = 1) +

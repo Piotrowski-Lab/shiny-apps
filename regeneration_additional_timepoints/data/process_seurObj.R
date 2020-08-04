@@ -8,6 +8,7 @@ library(pheatmap)
 library(hrbrthemes)
 library(tidyr)
 library(reshape2)
+library(stringr)
 
 if (TRUE) {
   setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -37,15 +38,15 @@ for (i in 1:length(files)) {
         print('changing early-HC to young-HCs')
         file_list[[i]]@meta.data$cell.type.ident <- plyr::revalue(
           file_list[[i]]@meta.data$cell.type.ident, c("early-HCs" = "young-HCs"))
-      
+      }
     #create new column in meta.data 
     #applied to all-she-pos and neuromast analysis
-        if ("cell.type.ident" %in% colnames(file_list[[i]]@meta.data)){
-           print('changing metadata colnames')
-            file_list[[i]]@meta.data$cell.type.ident.by.data.set <- factor(paste(file_list[[i]]@meta.data$cell.type.ident,
-                                                                           file_list[[i]]@meta.data$data.set,sep="_"))
-        }
-      }
+        # if ("cell.type.ident" %in% colnames(file_list[[i]]@meta.data)){
+        #    print('changing metadata colnames')
+        #     file_list[[i]]@meta.data$cell.type.ident.by.data.set <- factor(paste(file_list[[i]]@meta.data$cell.type.ident,
+        #                                                                    file_list[[i]]@meta.data$data.set,sep="_"))
+        # }
+      
     if ("cell_type" %in% colnames(file_list[[i]]@meta.data)){
       print(files[i])
       file_list[[i]]@meta.data$cell.type.ident.by.data.set <- factor(paste(file_list[[i]]@meta.data$cell_type,
@@ -80,7 +81,7 @@ for (i in 1:1){
 readSeuratObj <- TRUE
 modifySeuratObj <-TRUE
 
-files <- files[7:8]
+files <- files[7:9]
 file_list <- list()
 
 for (i in 1:length(files)) {
@@ -90,9 +91,34 @@ for (i in 1:length(files)) {
     DefaultAssay(file_list[[i]]) <- "RNA"
   }
   if(modifySeuratObj){
-    print('hi')
+    
+    if ("early-HCs" %in% file_list[[i]]$cell.type.ident){
+      print('changing early-HC to young-HCs')
+      file_list[[i]]@meta.data$cell.type.ident <- plyr::revalue(
+        file_list[[i]]@meta.data$cell.type.ident, c("early-HCs" = "young-HCs"))
+    }
+    print('changing column name')
+    #change cell.type.ident.by.data.set
     names(file_list[[i]]@meta.data)[names(file_list[[i]]@meta.data) == "cell.type.and.trt"] <- "cell.type.ident.by.data.set"
-  }
+    file_list[[i]]@meta.data$cell.type.ident.by.data.set <- gsub(pattern = "early-HCs", "young-HCs", 
+    file_list[[i]]@meta.data$cell.type.ident.by.data.set)   
+    file_list[[i]]$cell.type.ident.by.data.set <- factor(file_list[[i]]$cell.type.ident.by.data.set)
+    }
+  print(paste0("saving: ", files[i]))
+  saveRDS(file_list[[i]], file = files[i])
+}
+
+# =============================== reorder cell.type.ident, ptime objects
+cell.type <- c("central-cells", "HC-prog","young-HCs","mature-HCs")
+#reorder cell.type.ident.by.data.set in all-she-pos analysis & neuromast analysis
+for (i in 1:3){
+  print(file_list[[i]])
+  Idents(file_list[[i]]) <- "cell.type.ident"
+  file_list[[i]]@active.ident <- factor(file_list[[i]]@active.ident, levels= cell.type)
+  file_list[[i]]$cell.type.ident <- factor(file_list[[i]]$cell.type.ident,
+                                                       levels= my_levels)
+  file_list[[i]]@active.ident <- droplevels(file_list[[i]]@active.ident)
+  file_list[[i]]$cell.type.ident <- droplevels(file_list[[i]]$cell.type.ident)
   print(paste0("saving: ", files[i]))
   saveRDS(file_list[[i]], file = files[i])
 }
