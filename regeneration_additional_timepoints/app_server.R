@@ -389,6 +389,148 @@ server <- function(input, output) {
     }
   )
   
+  # # ======== Stacked Violin Plot ======== #
+  # 
+  StkdVlnPlotF <- reactive({
+    seurat_obj <- SelectDataset()
+    selected <- unlist(strsplit(input$vlnStkdGenes, " "))
+    
+    ifelse(selected %in% com_name,
+           selected <- selected[selected %in% com_name],
+           
+           ifelse(selected %in% ens_id,
+                  selected <- gene_df[ens_id %in% selected, 3],"")
+    )
+    
+    #seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsStkdVln]
+    
+    
+    
+    ids <- as.list(levels(seurat_obj$data.set))
+    
+    
+    gg_color_hue <- function(n) {
+      hues = seq(15, 375, length = n + 1)
+      hcl(h = hues, l = 65, c = 100)[1:n]
+    }
+    
+    ## extract the max value of the y axis
+    extract_max<- function(p){
+      ymax<- max(ggplot_build(p)$layout$panel_scales_y[[1]]$range$range)
+      return(ceiling(ymax))
+    }
+    
+    
+    obj_trt_list <- list()[1:length(ids)]
+    
+    for (i in 1:length(ids)) {
+      print(ids[[i]])
+      obj_trt_list[[i]] <- seurat_obj[,seurat_obj[["data.set"]] == ids[[i]]]
+    }
+    
+    stacked_violin_plot <- function(goi, obj_trt_list){
+      trt_plot_list <- list()[1:length(ids)]
+      names(trt_plot_list) <- ids
+      for (i in 1:length(ids)) {
+        vln_obj <- VlnPlot(
+          obj_trt_list[[i]], features = goi, pt.size = input$ptSizeStkdVln) +
+          xlab("") + ylab(ids[i]) + ggtitle("") +
+          theme(legend.position = "none", axis.text.x = element_blank(),
+                axis.ticks.x = element_blank(),
+                axis.title.y = element_text(size = rel(1), angle = 0),
+                axis.text.y = element_text(size = rel(1)),
+                plot.margin = unit(c(-1.0, 0.5, -1.0, 0.5), "cm"))
+        trt_plot_list[[i]] <- vln_obj
+      }
+      
+      trt_plot_list[[length(trt_plot_list)]]<- trt_plot_list[[length(trt_plot_list)]] +
+        theme(axis.text.x=element_text(), axis.ticks.x = element_line())
+      # change the y-axis tick to only max value, treats ymax from each obj_trt_list independently
+      ymaxs <- purrr::map_dbl(trt_plot_list, extract_max)
+      #finds highest ymax, normalize
+      ymaxs<- max(sapply(ymaxs, max))
+      trt_plot_list <- purrr::map2(trt_plot_list, ymaxs, function(x, y) x +
+                                     scale_y_continuous(breaks = c(y)) + expand_limits(y = y))
+      grid_obj <- cowplot::plot_grid(plotlist = trt_plot_list,
+                                     nrow = length(ids), ncol = 1, axis = "l", align = "hv") + #rel_heights  = c(1,1,1,1,1,1)) +
+        #theme(plot.margin = margin(2.0, 2.0, 2.0, 2.0, unit = "in")) 
+        ggtitle(goi) + theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+      
+      
+      return(grid_obj)
+      
+    }
+    grid_obj <- list()[1:length(selected)]
+    for (i in 1:length(selected)){
+      print(selected[[i]])
+      options(repr.plot.width = 12, repr.plot.height = 3)
+      
+      grid_obj[[i]] <- stacked_violin_plot(goi = selected[[i]], obj_trt_list = obj_trt_list)
+      
+    }
+    names(grid_obj) <- selected
+    
+    final_grid <- cowplot::plot_grid(plotlist = grid_obj, nrow = length(grid_obj), axis = "l", align = "hv", scale = 0.9) +
+      theme(plot.margin = margin(.2, .2, .2, .2, unit = "in"))
+    
+    return(final_grid)
+    
+  })
+  
+  output$cellSelectStkdVln <- renderUI({ # New cell type select
+    pickerInput("cellIdentsVln", "Add or remove clusters:",
+                choices = as.character(printIdents()), multiple = TRUE,
+                selected = as.character(printIdents()), options = list(
+                  `actions-box` = TRUE), width = "85%")
+  })
+  
+  mismatchStkdVln <- function() {
+    selected <- unlist(strsplit(input$vlnStkdGenes, " "))
+    
+    mismatch <- ifelse(!selected %in% c(com_name,ens_id),
+                       selected[!selected %in% c(com_name,ens_id)],"")
+    return(mismatch)
+  }
+  
+  output$notInStkdVln <- renderText({input$runStkdVlnPlot
+    isolate({mismatchStkdVln()})
+  })
+  
+  output$SelectedDataStkdVln <- renderText({input$runStkdVlnPlot
+    isolate({input$Analysis})
+  })
+  
+  output$myStkdVlnPlotF <- renderPlot({input$runStkdVlnPlot
+    isolate({withProgress({p <- StkdVlnPlotF(); print(p)},
+                          message = "Rendering plot..",
+                          min = 0, max = 10, value = 10)
+    })
+  })
+  
+  getHeightStkdVln <- function() {
+    l <- getLenInput(input$vlnStkdGenes)
+    if (l == 1) {h <- "800"
+    } else {
+      h <- as.numeric(ceiling(l) * 400)
+      #h <- paste0(h, "px")
+    }
+    return(h)
+  }
+  
+  output$plot.uiStkdVlnPlotF <- renderUI({input$runStkdVlnPlot
+    isolate({h <- getHeightStkdVln(); plotOutput("myStkdVlnPlotF",
+                                                 width = "800px", height = paste0(h, "px"))})
+  })
+  
+  output$downloadStkdVlnPlot <- downloadHandler(
+    filename = "StkdViolin_plot.pdf", content = function(file) {
+      png(file,
+          width = 800,
+          height = getHeightStkdVln() ,units = "px" )#* getLenInput(input$vlnStkdGenes))
+      print(StkdVlnPlotF())
+      dev.off()
+    }
+  )
   
   # # ======== Ridge Plot ======== #
   # RdgPlotF <- reactive({
