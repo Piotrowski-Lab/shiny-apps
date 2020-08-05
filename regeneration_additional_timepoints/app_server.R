@@ -134,7 +134,7 @@ server <- function(input, output) {
       umap_clusters <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                                label = TRUE, label.size = 0, group.by = "cell.type.ident",
                                cols = cluster_clrs)
-    } else if (input$Analysis == "HC-lineage-regen" || input$Analysis == "HC-lineage-homeo" || input$Analysis == "HC-lineage-homeo-and-regen") {
+    } else if (input$Analysis %in% ptime_analysis) {
       umap_clusters <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                                label = TRUE, label.size = 0, group.by = "cell.type.ident.by.data.set",
                                cols = gg_color_hue(length(levels(seurat_obj$cell.type.ident.by.data.set))))
@@ -402,9 +402,7 @@ server <- function(input, output) {
                   selected <- gene_df[ens_id %in% selected, 3],"")
     )
     
-    #seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsStkdVln]
-    
-    
+    seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsStkdVln]
     
     ids <- as.list(levels(seurat_obj$data.set))
     
@@ -425,6 +423,8 @@ server <- function(input, output) {
     
     for (i in 1:length(ids)) {
       print(ids[[i]])
+      #seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsStkdVln]
+
       obj_trt_list[[i]] <- seurat_obj[,seurat_obj[["data.set"]] == ids[[i]]]
     }
     
@@ -433,13 +433,25 @@ server <- function(input, output) {
       names(trt_plot_list) <- ids
       for (i in 1:length(ids)) {
         vln_obj <- VlnPlot(
-          obj_trt_list[[i]], features = goi, pt.size = input$ptSizeStkdVln) +
+          obj_trt_list[[i]], features = goi, pt.size = 0.0) +
           xlab("") + ylab(ids[i]) + ggtitle("") +
           theme(legend.position = "none", axis.text.x = element_blank(),
                 axis.ticks.x = element_blank(),
                 axis.title.y = element_text(size = rel(1), angle = 0),
                 axis.text.y = element_text(size = rel(1)),
                 plot.margin = unit(c(-1.0, 0.5, -1.0, 0.5), "cm"))
+        if (input$Analysis %in% ptime_analysis){
+        vln_obj <- VlnPlot(
+          obj_trt_list[[i]], features = goi, pt.size = 0.0) +
+          xlab("") + ylab(ids[i]) + ggtitle("") +
+          theme(legend.position = "none", axis.text.x = element_blank(),
+                axis.ticks.x = element_blank(),
+                axis.title.y = element_text(size = rel(1), angle = 0),
+                axis.text.y = element_text(size = rel(1)),
+                plot.margin = unit(c(-1.0, 0.5, -1.0, 0.5), "cm")) +
+          scale_x_discrete(limits = c("central-cells","HC-prog","young-HCs","mature-HCs"))
+        #placeholders
+        }
         trt_plot_list[[i]] <- vln_obj
       }
       
@@ -454,7 +466,7 @@ server <- function(input, output) {
       grid_obj <- cowplot::plot_grid(plotlist = trt_plot_list,
                                      nrow = length(ids), ncol = 1, axis = "l", align = "hv") + #rel_heights  = c(1,1,1,1,1,1)) +
         #theme(plot.margin = margin(2.0, 2.0, 2.0, 2.0, unit = "in")) 
-        ggtitle(goi) + theme(plot.title = element_text(hjust = 0.5, face = "bold"))
+        ggtitle(goi) + theme(plot.title = element_text(hjust = 0.5, face = "bold")) 
       
       
       return(grid_obj)
@@ -478,7 +490,7 @@ server <- function(input, output) {
   })
   
   output$cellSelectStkdVln <- renderUI({ # New cell type select
-    pickerInput("cellIdentsVln", "Add or remove clusters:",
+    pickerInput("cellIdentsStkdVln", "Add or remove clusters:",
                 choices = as.character(printIdents()), multiple = TRUE,
                 selected = as.character(printIdents()), options = list(
                   `actions-box` = TRUE), width = "85%")
@@ -511,7 +523,7 @@ server <- function(input, output) {
     l <- getLenInput(input$vlnStkdGenes)
     if (l == 1) {h <- "800"
     } else {
-      h <- as.numeric(ceiling(l) * 400)
+      h <- as.numeric(ceiling(l) * 500)
       #h <- paste0(h, "px")
     }
     return(h)

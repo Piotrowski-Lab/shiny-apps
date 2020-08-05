@@ -54,9 +54,14 @@ print("done.")
 # ! =========== items to check/change for project {START}
 
 names(file_list) <- as.character(c("neuromast-cells", "AP-cells", "central-cells",
-                                   "DV-cells", "HC-prog", "mantle-cells", "HC-lineage-homeo-and-regen","HC-lineage-regen", "HC-lineage-homeo"))
+                                   "DV-cells", "HC-prog", "mantle-cells", "HC-lineage-homeo-and-regen",
+                                   "HC-lineage-regen", "HC-lineage-homeo"))
 
-multiple_idents_seurObj <- as.character(c("neuromast-cells","HC-lineage-homeo-and-regen","HC-lineage-regen", "HC-lineage-homeo"))
+multiple_idents_seurObj <- as.character(c("neuromast-cells","HC-lineage-homeo-and-regen","HC-lineage-regen", 
+                                          "HC-lineage-homeo"))
+
+ptime_analysis <- as.character(c("HC-lineage-homeo-and-regen","HC-lineage-regen", 
+                                 "HC-lineage-homeo"))
 
 trt_colors <- c("green3", "gold", "darkorange", "red", "magenta",
 		"mediumpurple1", "lightseagreen", "deepskyblue", "blue")

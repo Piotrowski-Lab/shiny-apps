@@ -79,7 +79,7 @@ for (i in 1:1){
 
 # =============================== modify ptime regen objects
 readSeuratObj <- TRUE
-modifySeuratObj <-TRUE
+modifySeuratObj <-FALSE
 
 files <- files[7:9]
 file_list <- list()
@@ -116,10 +116,12 @@ for (i in 1:3){
   Idents(file_list[[i]]) <- "cell.type.ident"
   file_list[[i]]@active.ident <- factor(file_list[[i]]@active.ident, levels= cell.type)
   file_list[[i]]$cell.type.ident <- factor(file_list[[i]]$cell.type.ident,
-                                                       levels= my_levels)
+                                                       levels= cell.type)
   file_list[[i]]@active.ident <- droplevels(file_list[[i]]@active.ident)
   file_list[[i]]$cell.type.ident <- droplevels(file_list[[i]]$cell.type.ident)
+  #drop levels for data.set
+  file_list[[i]]$data.set <- droplevels(file_list[[i]]$data.set)
+  
   print(paste0("saving: ", files[i]))
   saveRDS(file_list[[i]], file = files[i])
 }
-

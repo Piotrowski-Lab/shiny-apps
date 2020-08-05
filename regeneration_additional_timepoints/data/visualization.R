@@ -28,9 +28,9 @@ for (i in 1:length(files)) {
     DefaultAssay(file_list[[i]]) <- "RNA"
   }
 }
-seurat_obj <- file_list[[7]] #ptime homeo and regen combined
+seurat_obj <- file_list[[8]] #ptime homeo and regen combined
 
-
+seurat_obj$data.set <- droplevels(seurat_obj$data.set)
 ids <- as.list(levels(seurat_obj$data.set))
 
 selected <- c("atoh1a", "her4.1")
@@ -56,6 +56,7 @@ for (i in 1:length(ids)) {
 }
 names(obj_trt_list) <- ids
 
+
 stacked_violin_plot <- function(goi, obj_trt_list){
   trt_plot_list <- list()[1:length(ids)]
   names(trt_plot_list) <- ids
@@ -67,7 +68,10 @@ stacked_violin_plot <- function(goi, obj_trt_list){
             axis.ticks.x = element_blank(),
             axis.title.y = element_text(size = rel(1), angle = 0),
             axis.text.y = element_text(size = rel(1)),
-            plot.margin = unit(c(-1.0, 0.5, -1.0, 0.5), "cm"))
+            plot.margin = unit(c(-1.0, 0.5, -1.0, 0.5), "cm")) +
+            scale_x_discrete(limits = c("central-cells","HC-prog","young-HCs","mature-HCs"))
+            #placeholders
+    
     trt_plot_list[[i]] <- vln_obj
   }
   
@@ -100,4 +104,4 @@ names(grid_obj) <- selected
 
 final_grid <- cowplot::plot_grid(plotlist = grid_obj, nrow = length(grid_obj), axis = "l", align = "hv", scale = 0.9) +
   theme(plot.margin = margin(.2, .2, .2, .2, unit = "in"))
-
+final_grid
