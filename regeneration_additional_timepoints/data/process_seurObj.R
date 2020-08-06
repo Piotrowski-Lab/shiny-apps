@@ -104,8 +104,8 @@ for (i in 1:length(files)) {
     file_list[[i]]@meta.data$cell.type.ident.by.data.set)   
     file_list[[i]]$cell.type.ident.by.data.set <- factor(file_list[[i]]$cell.type.ident.by.data.set)
     }
-  print(paste0("saving: ", files[i]))
-  saveRDS(file_list[[i]], file = files[i])
+  # print(paste0("saving: ", files[i]))
+  # saveRDS(file_list[[i]], file = files[i])
 }
 
 # =============================== reorder cell.type.ident, ptime objects
@@ -125,3 +125,46 @@ for (i in 1:3){
   print(paste0("saving: ", files[i]))
   saveRDS(file_list[[i]], file = files[i])
 }
+
+# ======= manual reorder of 
+
+ptime_home_regen <- file_list[[1]]
+type_treat_levels <- c( "homeo.central-cells", "0min.central-cells" , "30min.central-cells",
+                        "1hr.central-cells" ,  "1.5hr.central-cells" ,"2hr.central-cells",
+                        "3hr.central-cells" ,  "5hr.central-cells",   "1hr.HC-prog",
+                        "1.5hr.HC-prog"  ,     "2hr.HC-prog"   ,      "3hr.HC-prog",
+                        "5hr.HC-prog"    ,     "10hr.HC-prog"    ,    "homeo.HC-prog",
+                        "1.5hr.young-HCs"   ,  "2hr.young-HCs"   ,    "3hr.young-HCs",
+                        "5hr.young-HCs"   ,    "10hr.young-HCs"    ,  "2hr.mature-HCs", "3hr.mature-HCs"   ,
+                        "5hr.mature-HCs"   ,   "10hr.mature-HCs",
+                        "homeo.mature-HCs")
+ptime_home_regen$cell.type.ident.by.data.set <- factor(ptime_home_regen$cell.type.ident.by.data.set, levels = type_treat_levels)
+levels(ptime_home_regen$cell.type.ident.by.data.set)
+levels(ptime_home_regen$cell.type.ident)
+levels(ptime_home_regen$data.set)
+saveRDS(ptime_home_regen, file = files[1])
+
+ptime_regen <- file_list[[2]]
+type_treat_levels <- c("0min.central-cells" , "30min.central-cells", "1hr.central-cells",
+                       "1.5hr.central-cells" ,"2hr.central-cells" ,  "3hr.central-cells",
+                       "5hr.central-cells"  , "1hr.HC-prog"      ,   "1.5hr.HC-prog",
+                       "2hr.HC-prog" ,        "3hr.HC-prog"  ,       "5hr.HC-prog",
+                       "10hr.HC-prog"   ,     "1.5hr.young-HCs"   ,  "2hr.young-HCs",
+                       "3hr.young-HCs"   ,    "5hr.young-HCs"   ,    "10hr.young-HCs",
+                       "2hr.mature-HCs"   ,   "3hr.mature-HCs"  ,    "5hr.mature-HCs",
+                       "10hr.mature-HCs")
+ptime_regen$cell.type.ident.by.data.set <- factor(ptime_regen$cell.type.ident.by.data.set, levels = type_treat_levels)
+levels(ptime_regen$cell.type.ident.by.data.set)
+levels(ptime_regen$cell.type.ident)
+levels(ptime_regen$data.set)
+saveRDS(ptime_regen, file = files[2])
+
+
+ptime_homeo <- file_list[[3]]
+type_treat_levels <- c( "homeo.central-cells" ,"homeo.HC-prog"    ,   "homeo.young-HCs",
+                        "homeo.mature-HCs")
+ptime_homeo$cell.type.ident.by.data.set <- factor(ptime_homeo$cell.type.ident.by.data.set, levels = type_treat_levels)
+levels(ptime_homeo$cell.type.ident.by.data.set)
+levels(ptime_homeo$cell.type.ident)
+saveRDS(ptime_homeo, file = files[3])
+

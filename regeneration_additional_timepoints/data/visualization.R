@@ -9,6 +9,7 @@ library(hrbrthemes)
 library(tidyr)
 library(reshape2)
 library(stringr)
+library(patchwork)
 
 if (TRUE) {
   setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
@@ -28,7 +29,7 @@ for (i in 1:length(files)) {
     DefaultAssay(file_list[[i]]) <- "RNA"
   }
 }
-seurat_obj <- file_list[[8]] #ptime homeo and regen combined
+seurat_obj <- file_list[[7]] #ptime homeo and regen combined
 
 seurat_obj$data.set <- droplevels(seurat_obj$data.set)
 ids <- as.list(levels(seurat_obj$data.set))
@@ -105,3 +106,85 @@ names(grid_obj) <- selected
 final_grid <- cowplot::plot_grid(plotlist = grid_obj, nrow = length(grid_obj), axis = "l", align = "hv", scale = 0.9) +
   theme(plot.margin = margin(.2, .2, .2, .2, unit = "in"))
 final_grid
+
+# ======================== grouped heat map
+
+features <- c("atoh1a", "her4.1", "hes2.2", "dld", "sox4a*1", "myclb", "gadd45gb.1",
+              "insm1a", "wnt2", "sost", "sfrp1a", "pcna", "mki67", "isl1", "slc1a3a", "glula", "lfng", "cbln20", "ebf3a",
+              "znf185", "si:ch211-229d2.5", "si:ch73-261i21.5", "spaca4l", "foxp4", "crip1")
+
+
+dotplot <- DotPlot(seurat_obj, features = features,
+                   group.by = "cell.type.ident.by.data.set")
+
+# dotplot$data$groupIdent <- gsub("(.+?)(\\_.*)", "\\1",dotplot$data$id)
+# dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
+
+if(TRUE){
+  dotplot$data$groupIdent <- gsub("^.*\\.", "",dotplot$data$id)
+  dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
+}
+
+g <- ggplot(dotplot$data, aes(id, features.plot,fill= avg.exp.scaled, width = 1, height = 1)) + 
+  geom_tile() +
+  scale_fill_distiller(
+    palette = "RdYlBu") +
+  theme_ipsum()+
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
+        axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines")) + facet_grid( ~ groupIdent, scales='free_x')
+
+g
+
+# ========================== stkd violin plot by gene
+group.by <- "data.set"
+
+p_size <- as.numeric(.5)
+
+modify_vlnplot<- function(obj, 
+                          feature, 
+                          pt.size = p_size, 
+                          plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),
+                          grouped = group.by) {
+  p<- VlnPlot(obj, features = feature, pt.size = pt.size, group.by = grouped )  + 
+    xlab("") + ylab(feature) + ggtitle("") + 
+    theme(legend.position = "none", 
+          axis.text.x = element_blank(), 
+          axis.ticks.x = element_blank(), 
+          axis.title.y = element_text(size = rel(1), angle = 0), 
+          axis.text.y = element_text(size = rel(1)), 
+          plot.margin = plot.margin ) 
+  return(p)
+}
+
+## extract the max value of the y axis
+extract_max<- function(p){
+  ymax<- max(ggplot_build(p)$layout$panel_scales_y[[1]]$range$range)
+  return(ceiling(ymax))
+}
+
+
+## main function
+StackedVlnPlot<- function(obj, features,
+                          pt.size = 0, 
+                          plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),
+                          ...) {
+  
+  plot_list<- purrr::map(features, function(x) modify_vlnplot(obj = obj,feature = x, grouped = group.by, pt.size = p_size))
+  
+  # Add back x-axis title to bottom plot. patchwork is going to support this?
+  plot_list[[length(plot_list)]]<- plot_list[[length(plot_list)]] +
+    theme(axis.text.x=element_text(angle = 90), axis.ticks.x = element_line())
+  
+  # change the y-axis tick to only max value 
+  ymaxs<- purrr::map_dbl(plot_list, extract_max)
+  #finds highest ymax, normalize
+  ymaxs<- max(sapply(ymaxs, max))
+  plot_list<- purrr::map2(plot_list, ymaxs, function(x,y) x + 
+                            scale_y_continuous(breaks = c(y)) + 
+                            expand_limits(y = y))
+  
+  p<- patchwork::wrap_plots(plotlist = plot_list, ncol = 1)
+  return(p)
+}
+
+StackedVlnPlot(obj = seurat_obj, features = features)

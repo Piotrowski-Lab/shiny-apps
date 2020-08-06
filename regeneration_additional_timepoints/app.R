@@ -1,5 +1,8 @@
 library(shiny)
 library(cowplot)
+library(devtools)
+dev_mode(on=T)
+#devtools::install_github(repo = 'satijalab/seurat', ref = 'develop')
 library(Seurat)
 library(ggplot2)
 library(shinythemes)
@@ -25,6 +28,12 @@ library(reshape2)
 gg_color_hue <- function(n) {
 	hues = seq(15, 375, length = n + 1)
 		hcl(h = hues, l = 65, c = 100)[1:n]
+}
+
+## extract the max value of the y axis
+extract_max<- function(p){
+  ymax<- max(ggplot_build(p)$layout$panel_scales_y[[1]]$range$range)
+  return(ceiling(ymax))
 }
 
 getLenInput <- function(input) {

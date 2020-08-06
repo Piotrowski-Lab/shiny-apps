@@ -175,7 +175,7 @@ server <- function(input, output) {
     plotOutput("myDatFeatPlotH1", width = "925px", height = "525px")
   })
   
-  n_panels <- 1:8
+  n_panels <- 1:9
   
   lapply(n_panels, function(i) {
     output[[paste0("myDatFeatPlotV", i)]] <- 
@@ -540,6 +540,138 @@ server <- function(input, output) {
           width = 800,
           height = getHeightStkdVln() ,units = "px" )#* getLenInput(input$vlnStkdGenes))
       print(StkdVlnPlotF())
+      dev.off()
+    }
+  )
+  
+  # # ======== Gene Stacked Violin Plot ======== #
+  # 
+  GStkdVlnPlotF <- reactive({
+    seurat_obj <- SelectDataset()
+    selected <- unlist(strsplit(input$vlnGStkdGenes, " "))
+    
+    ifelse(selected %in% com_name,
+           selected <- selected[selected %in% com_name],
+           
+           ifelse(selected %in% ens_id,
+                  selected <- gene_df[ens_id %in% selected, 3],"")
+    )
+    
+    seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsGStkdVln]
+    
+    group.by <- input$selectGrpGStkdVln
+    
+    if(input$Analysis %notin% multiple_idents_seurObj && input$selectGrpGStkdVln == "cell.type.ident"){
+      group.by <- "seurat_clusters"
+    }
+    
+    p_size <- as.numeric(input$ptSizeGStkdVln)
+    
+    modify_vlnplot<- function(obj, 
+                              feature, 
+                              pt.size = p_size, 
+                              plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),
+                              grouped = group.by) {
+      p<- VlnPlot(obj, features = feature, pt.size = pt.size, group.by = grouped )  + 
+        xlab("") + ylab(feature) + ggtitle("") + 
+        theme(legend.position = "none", 
+              axis.text.x = element_blank(), 
+              axis.ticks.x = element_blank(), 
+              axis.title.y = element_text(size = rel(1), angle = 0), 
+              axis.text.y = element_text(size = rel(1)), 
+              plot.margin = plot.margin ) 
+      return(p)
+    }
+    
+    ## extract the max value of the y axis
+    extract_max<- function(p){
+      ymax<- max(ggplot_build(p)$layout$panel_scales_y[[1]]$range$range)
+      return(ceiling(ymax))
+    }
+    
+    
+    ## main function
+    StackedVlnPlot<- function(obj, features,
+                              pt.size = 0, 
+                              plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),
+                              ...) {
+      
+      plot_list<- purrr::map(features, function(x) modify_vlnplot(obj = obj,feature = x, grouped = group.by, pt.size = p_size))
+      
+      # Add back x-axis title to bottom plot. patchwork is going to support this?
+      plot_list[[length(plot_list)]]<- plot_list[[length(plot_list)]] +
+        theme(axis.text.x=element_text(angle = 90), axis.ticks.x = element_line())
+      
+      # change the y-axis tick to only max value 
+      ymaxs<- purrr::map_dbl(plot_list, extract_max)
+      #finds highest ymax, normalize
+      ymaxs<- max(sapply(ymaxs, max))
+      plot_list<- purrr::map2(plot_list, ymaxs, function(x,y) x + 
+                                scale_y_continuous(breaks = c(y)) + 
+                                expand_limits(y = y))
+      
+      p<- patchwork::wrap_plots(plotlist = plot_list, ncol = 1)
+      return(p)
+    }
+    
+    g <- StackedVlnPlot(obj = seurat_obj, features = selected)
+    
+    return(g)
+    
+    
+  })
+  
+  output$cellSelectGStkdVln <- renderUI({ # New cell type select
+    pickerInput("cellIdentsGStkdVln", "Add or remove clusters:",
+                choices = as.character(printIdents()), multiple = TRUE,
+                selected = as.character(printIdents()), options = list(
+                  `actions-box` = TRUE), width = "85%")
+  })
+  
+  mismatchGStkdVln <- function() {
+    selected <- unlist(strsplit(input$vlnGStkdGenes, " "))
+    
+    mismatch <- ifelse(!selected %in% c(com_name,ens_id),
+                       selected[!selected %in% c(com_name,ens_id)],"")
+    return(mismatch)
+  }
+  
+  output$notInGStkdVln <- renderText({input$runGStkdVlnPlot
+    isolate({mismatchGStkdVln()})
+  })
+  
+  output$SelectedDataGStkdVln <- renderText({input$runGStkdVlnPlot
+    isolate({input$Analysis})
+  })
+  
+  output$myGStkdVlnPlotF <- renderPlot({input$runGStkdVlnPlot
+    isolate({withProgress({p <- GStkdVlnPlotF(); print(p)},
+                          message = "Rendering plot..",
+                          min = 0, max = 10, value = 10)
+    })
+  })
+  
+  getHeightGStkdVln <- function() {
+    l <- getLenInput(input$vlnGStkdGenes)
+    if (l == 1) {h <- "800"
+    } else {
+      h <- as.numeric(ceiling(l) * 175)
+      #h <- paste0(h, "px")
+    }
+    return(h)
+  }
+  
+  output$plot.uiGStkdVlnPlotF <- renderUI({input$runGStkdVlnPlot
+    isolate({h <- getHeightGStkdVln(); plotOutput("myGStkdVlnPlotF",
+                                                 width = "800px", height = paste0(h, "px"))})
+  })
+  
+  output$downloadGStkdVlnPlot <- downloadHandler(
+    filename = "GStkdViolin_plot.pdf", content = function(file) {
+      png(file,
+          width = 800,
+          height = getHeightGStkdVln() ,units = "px" )#* getLenInput(input$vlnStkdGenes))
+      print(GStkdVlnPlotF())
       dev.off()
     }
   )
