@@ -130,7 +130,7 @@ server <- function(input, output) {
     
     seurat_obj <- SelectDataset()
 
-    if (input$Analysis == "neuromast-cells") {
+    if (input$Analysis == "neuromast-cells" | input$Analysis == "neuromast-and-skin") {
       umap_clusters <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                                label = TRUE, label.size = 0, group.by = "cell.type.ident",
                                cols = cluster_clrs)
@@ -439,7 +439,7 @@ server <- function(input, output) {
                 axis.ticks.x = element_blank(),
                 axis.title.y = element_text(size = rel(1), angle = 0),
                 axis.text.y = element_text(size = rel(1)),
-                plot.margin = unit(c(-1.0, 0.5, -1.0, 0.5), "cm"))
+                plot.margin = unit(c(-1.5, 0.5, -1.5, 0.5), "cm"))
         if (input$Analysis %in% ptime_analysis){
         vln_obj <- VlnPlot(
           obj_trt_list[[i]], features = goi, pt.size = 0.0) +
@@ -448,15 +448,16 @@ server <- function(input, output) {
                 axis.ticks.x = element_blank(),
                 axis.title.y = element_text(size = rel(1), angle = 0),
                 axis.text.y = element_text(size = rel(1)),
-                plot.margin = unit(c(-1.0, 0.5, -1.0, 0.5), "cm")) +
+                plot.margin = unit(c(-1.5, 0.5, -1.5, 0.5), "cm")) +
           scale_x_discrete(limits = c("central-cells","HC-prog","young-HCs","mature-HCs"))
         #placeholders
         }
+        
         trt_plot_list[[i]] <- vln_obj
       }
       
       trt_plot_list[[length(trt_plot_list)]]<- trt_plot_list[[length(trt_plot_list)]] +
-        theme(axis.text.x=element_text(), axis.ticks.x = element_line())
+        theme(axis.text.x=element_text(angle = 90), axis.ticks.x = element_line())
       # change the y-axis tick to only max value, treats ymax from each obj_trt_list independently
       ymaxs <- purrr::map_dbl(trt_plot_list, extract_max)
       #finds highest ymax, normalize
@@ -465,8 +466,8 @@ server <- function(input, output) {
                                      scale_y_continuous(breaks = c(y)) + expand_limits(y = y))
       grid_obj <- cowplot::plot_grid(plotlist = trt_plot_list,
                                      nrow = length(ids), ncol = 1, axis = "l", align = "hv") + #rel_heights  = c(1,1,1,1,1,1)) +
-        #theme(plot.margin = margin(2.0, 2.0, 2.0, 2.0, unit = "in")) 
-        ggtitle(goi) + theme(plot.title = element_text(hjust = 0.5, face = "bold")) 
+        theme(plot.margin = margin(unit(c(-0.75, 0, -0.75, 0), "cm"))) +
+        ggtitle(goi) + theme(plot.title = element_text(hjust = 0.5, face = "bold", margin = margin(.5, 0 ,.5,0,unit = "cm"))) 
       
       
       return(grid_obj)
@@ -483,7 +484,7 @@ server <- function(input, output) {
     names(grid_obj) <- selected
     
     final_grid <- cowplot::plot_grid(plotlist = grid_obj, nrow = length(grid_obj), axis = "l", align = "hv", scale = 0.9) +
-      theme(plot.margin = margin(.2, .2, .2, .2, unit = "in"))
+      theme(plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"))
     
     return(final_grid)
     
@@ -523,7 +524,7 @@ server <- function(input, output) {
     l <- getLenInput(input$vlnStkdGenes)
     if (l == 1) {h <- "800"
     } else {
-      h <- as.numeric(ceiling(l) * 500)
+      h <- as.numeric(ceiling(l) * 675)
       #h <- paste0(h, "px")
     }
     return(h)

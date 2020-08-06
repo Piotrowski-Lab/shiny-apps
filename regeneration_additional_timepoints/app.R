@@ -61,12 +61,13 @@ print("done.")
 
 
 # ! =========== items to check/change for project {START}
+file_list <- file_list[c(1,7,2:6,8:10)]
 
-names(file_list) <- as.character(c("neuromast-cells", "AP-cells", "central-cells",
+names(file_list) <- as.character(c("neuromast-cells","neuromast-and-skin", "AP-cells", "central-cells",
                                    "DV-cells", "HC-prog", "mantle-cells", "HC-lineage-homeo-and-regen",
                                    "HC-lineage-regen", "HC-lineage-homeo"))
 
-multiple_idents_seurObj <- as.character(c("neuromast-cells","HC-lineage-homeo-and-regen","HC-lineage-regen", 
+multiple_idents_seurObj <- as.character(c("neuromast-and-skin","neuromast-cells","HC-lineage-homeo-and-regen","HC-lineage-regen", 
                                           "HC-lineage-homeo"))
 
 ptime_analysis <- as.character(c("HC-lineage-homeo-and-regen","HC-lineage-regen", 

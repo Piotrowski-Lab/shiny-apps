@@ -29,7 +29,7 @@ for (i in 1:length(files)) {
     DefaultAssay(file_list[[i]]) <- "RNA"
   }
 }
-seurat_obj <- file_list[[7]] #ptime homeo and regen combined
+seurat_obj <- file_list[[2]] #ptime homeo and regen combined
 
 seurat_obj$data.set <- droplevels(seurat_obj$data.set)
 ids <- as.list(levels(seurat_obj$data.set))
@@ -58,6 +58,7 @@ for (i in 1:length(ids)) {
 names(obj_trt_list) <- ids
 
 
+
 stacked_violin_plot <- function(goi, obj_trt_list){
   trt_plot_list <- list()[1:length(ids)]
   names(trt_plot_list) <- ids
@@ -69,15 +70,15 @@ stacked_violin_plot <- function(goi, obj_trt_list){
             axis.ticks.x = element_blank(),
             axis.title.y = element_text(size = rel(1), angle = 0),
             axis.text.y = element_text(size = rel(1)),
-            plot.margin = unit(c(-1.0, 0.5, -1.0, 0.5), "cm")) +
-            scale_x_discrete(limits = c("central-cells","HC-prog","young-HCs","mature-HCs"))
-            #placeholders
+            plot.margin = unit(c(-1.0, 0.5, -1.0, 0.5), "cm")) 
+            # #placeholders
     
     trt_plot_list[[i]] <- vln_obj
   }
   
   trt_plot_list[[length(trt_plot_list)]]<- trt_plot_list[[length(trt_plot_list)]] +
-    theme(axis.text.x=element_text(), axis.ticks.x = element_line())
+    theme(axis.text.x=element_text(), axis.ticks.x = element_line()) +
+    scale_x_discrete(limits = c(factor(levels(seurat_obj$seurat_clusters))))
   # change the y-axis tick to only max value, treats ymax from each obj_trt_list independently
   ymaxs <- purrr::map_dbl(trt_plot_list, extract_max)
   #finds highest ymax, normalize
