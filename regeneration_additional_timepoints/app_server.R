@@ -1054,7 +1054,7 @@ server <- function(input, output) {
       dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
       
       #applies to ptime objects
-      if(input$Analysis %in% multiple_idents_seurObj[2:4]){
+      if(input$Analysis %in% ptime_analysis){
         dotplot$data$groupIdent <- gsub("^.*\\.", "",dotplot$data$id)
         dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
       }
@@ -1118,7 +1118,7 @@ server <- function(input, output) {
       dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
       
       #applies to ptime objects
-      if(input$Analysis %in% multiple_idents_seurObj[2:3]){
+      if(input$Analysis %in% ptime_analysis){
         dotplot$data$groupIdent <- gsub("^.*\\.", "",dotplot$data$id)
         dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
       }
