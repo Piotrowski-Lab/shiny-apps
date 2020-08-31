@@ -628,14 +628,14 @@ server <- function(input, output) {
   
   output$plot.uiDotPlotF <- renderUI({input$runDotPlot
     isolate({h <- getHeightDot(); plotOutput("myDotPlotF",
-                                             width = paste0(input$manAdjustDotW, "px"),
-                                             height = paste0(input$manAdjustDotH, "px"))})
+                                             width = paste0(input$manAdjustDotW, "in"),
+                                             height = paste0(input$manAdjustDotH, "in"))})
   })
   
   output$downloadDotPlot <- downloadHandler(
     filename = "dot_plot.png", content = function(file) {
       png(file, height = as.numeric(input$manAdjustDotH),
-          width = as.numeric(input$manAdjustDotW), units = "px")
+          width = as.numeric(input$manAdjustDotW), units = "in", res = 300)
       print(DotPlotF())
       dev.off()
     }
@@ -921,15 +921,15 @@ server <- function(input, output) {
   # 
   output$plot.uiPheatmapF <- renderUI({input$runPhmap
     isolate({h <- getHeightPhmap(); plotOutput("myPhmapF",
-                                               width = paste0(input$manAdjustHmapW, "px"),
-                                               height = paste0(input$manAdjustHmapH, "px"))})
+                                               width = paste0(input$manAdjustHmapW, "in"),
+                                               height = paste0(input$manAdjustHmapH, "in"))})
   })
   
   #download
   output$downloadhmap <- downloadHandler(
     filename = "heatmap.png", content = function(file) {
       png(file, height = as.numeric(input$manAdjustHmapH),
-          width = as.numeric(input$manAdjustHmapW), units = "px")
+          width = as.numeric(input$manAdjustHmapW), units = "in", res = 300)
       print(pHeatmapF())
       dev.off()
     }
@@ -1136,7 +1136,8 @@ server <- function(input, output) {
               axis.ticks.x=element_blank(),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
               strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
-        facet_grid( ~ id, space = 'free', scales = 'free')
+        facet_grid( ~ id, space = 'free', scales = 'free') +
+        ylim(rev(levels(data$Feature))) 
       
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1190,7 +1191,8 @@ server <- function(input, output) {
                 axis.ticks.x=element_blank(),
                 axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
                 strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
-          facet_grid( ~ id, space = 'free', scales = 'free')
+          facet_grid( ~ id, space = 'free', scales = 'free') +
+          ylim(rev(levels(data$Feature))) 
         
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1267,15 +1269,15 @@ server <- function(input, output) {
   
   output$plot.uiIndvpHeatmapF <- renderUI({input$runIndvPhmap
     isolate({h <- getHeightIndvPhmap(); plotOutput("myIndvPhmapF",
-                                                   width = paste0(input$manAdjustIndvHmapW, "px"),
-                                                   height = paste0(input$manAdjustIndvHmapH, "px"))})
+                   width = paste0(input$manAdjustIndvHmapW, "in"),
+                   height = paste0(input$manAdjustIndvHmapH, "in"))})
   })
   
   #download
   output$downloadIndvhmap <- downloadHandler(
     filename = "IndvHeatmap.png", content = function(file) {
       png(file, height = as.numeric(input$manAdjustIndvHmapH),
-          width = as.numeric(input$manAdjustIndvHmapW), units = "px")
+          width = as.numeric(input$manAdjustIndvHmapW), units = "in", res = 300)
       print(IndvpHeatmapF())
       dev.off()
     }

@@ -4,11 +4,11 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 files <- list.files(".", pattern = "*.RDS", full.names = TRUE)
 
-# =============================================== primary object input
+# =============================================== single object input
 
 combined_obj <- readRDS(files[1]) #combined seurat list
 
-#all_obj <- list("all_data_sets" = combined_obj)
+combined_obj <- list("SeurObj_anchored_cell_type_update_nmast_skin_additional_timepoints_seurat3_v1.0_" = combined_obj)
 
 print(object.size(combined_obj), units = "MB") #before
 
@@ -23,7 +23,7 @@ for (i in 1:length(combined_obj)) {
 print(object.size(combined_obj), units = "MB") #after
 
 
-# =================================================== add new objects 
+# =================================================== add new objects with list
 files <- files[2]
 combined_obj <- list()
 

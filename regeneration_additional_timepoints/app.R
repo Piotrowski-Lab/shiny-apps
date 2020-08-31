@@ -1,5 +1,8 @@
 library(shiny)
 library(cowplot)
+library(devtools)
+dev_mode(on=T)
+#devtools::install_github(repo = 'satijalab/seurat', ref = 'develop')
 library(Seurat)
 library(ggplot2)
 library(shinythemes)
@@ -27,6 +30,12 @@ gg_color_hue <- function(n) {
 		hcl(h = hues, l = 65, c = 100)[1:n]
 }
 
+## extract the max value of the y axis
+extract_max<- function(p){
+  ymax<- max(ggplot_build(p)$layout$panel_scales_y[[1]]$range$range)
+  return(ceiling(ymax))
+}
+
 getLenInput <- function(input) {
 	selected <- unlist(strsplit(input, " "))
 
@@ -52,11 +61,17 @@ print("done.")
 
 
 # ! =========== items to check/change for project {START}
+file_list <- file_list[c(1,7,2:6,8:10)]
 
-names(file_list) <- as.character(c("neuromast-cells", "AP-cells", "central-cells",
-                                   "DV-cells", "HC-prog", "mantle-cells", "HC-lineage-homeo-and-regen","HC-lineage-regen", "HC-lineage-homeo"))
+names(file_list) <- as.character(c("neuromast-cells","neuromast-and-skin", "AP-cells", "central-cells",
+                                   "DV-cells", "HC-prog", "mantle-cells", "HC-lineage-homeo-and-regen",
+                                   "HC-lineage-regen", "HC-lineage-homeo"))
 
-multiple_idents_seurObj <- as.character(c("neuromast-cells","HC-lineage-homeo-and-regen","HC-lineage-regen", "HC-lineage-homeo"))
+multiple_idents_seurObj <- as.character(c("neuromast-and-skin","neuromast-cells","HC-lineage-homeo-and-regen","HC-lineage-regen", 
+                                          "HC-lineage-homeo"))
+
+ptime_analysis <- as.character(c("HC-lineage-homeo-and-regen","HC-lineage-regen", 
+                                 "HC-lineage-homeo"))
 
 trt_colors <- c("green3", "gold", "darkorange", "red", "magenta",
 		"mediumpurple1", "lightseagreen", "deepskyblue", "blue")
@@ -82,16 +97,16 @@ com_name <- gene_df$Gene.name.uniq
 
 
 # =========== Server
-source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps/",
-			branch, "/", app_name, "/app_server.R"), local = TRUE)
+# source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps/",
+# 			branch, "/", app_name, "/app_server.R"), local = TRUE)
 
-#source(paste0("./app_server.R"), local = TRUE)
+source(paste0("./app_server.R"), local = TRUE)
 
 # =========== UI
-source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps/",
-			branch, "/", app_name, "/app_ui.R"), local = TRUE)
+# source(paste0("https://raw.githubusercontent.com/ntran95/shiny-apps/",
+# 			branch, "/", app_name, "/app_ui.R"), local = TRUE)
 
-#source(paste0("./app_ui.R"), local = TRUE)
+source(paste0("./app_ui.R"), local = TRUE)
 
 print("Size of all Seurat objects:")
 print(object.size(file_list), units = "MB")

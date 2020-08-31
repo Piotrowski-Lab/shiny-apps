@@ -28,7 +28,7 @@ cell.type <- c("mature-HCs","young-HCs","HC-prog" ,"central-cells", "DV-cells","
 treatments <- c("homeo" ,"0min" , "30min", "1hr", "3hr","5hr", "10hr")
 
 readSeuratObj <- TRUE
-modifySeuratObj <-TRUE
+modifySeuratObj <-FALSE
 
 for (i in 1:length(files)) {
   if (readSeuratObj){

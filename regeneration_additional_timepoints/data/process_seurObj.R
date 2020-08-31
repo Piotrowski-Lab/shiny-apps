@@ -24,7 +24,10 @@ cell.type <- c("mature-HCs","young-HCs","HC-prog" ,"central-cells", "DV-cells","
 treatments <- c("homeo" ,"0min" , "30min", "1hr", "1.5hr", "2hr", "3hr","5hr", "10hr")
 
 readSeuratObj <- TRUE
-modifySeuratObj <-TRUE
+modifySeuratObj <-FALSE
+
+#input target file
+files <- files[c(1,9)]
 
 for (i in 1:length(files)) {
   if (readSeuratObj){
@@ -39,13 +42,28 @@ for (i in 1:length(files)) {
         file_list[[i]]@meta.data$cell.type.ident <- plyr::revalue(
           file_list[[i]]@meta.data$cell.type.ident, c("early-HCs" = "young-HCs"))
       }
+    if("cell.type.old" %in% colnames(file_list[[i]]@meta.data)){
+      print('changing early-HC to young-HCs and column names')
+      file_list[[i]]@meta.data$cell.type.old <- plyr::revalue(
+        file_list[[i]]@meta.data$cell.type.old, c("early-HCs" = "young-HCs"))
+      file_list[[i]]@meta.data$cell.type.ident <- plyr::revalue(
+        file_list[[i]]@meta.data$cell.type.ident, c("early-HCs" = "young-HCs"))
+      #change cell.type.ident to cell.type.ident1
+      names(file_list[[i]]@meta.data)[names(file_list[[i]]@meta.data) == "cell.type.ident"] <- "cell.type.ident1"
+      #change cell.type.old to cell.type.ident
+      names(file_list[[i]]@meta.data)[names(file_list[[i]]@meta.data) == "cell.type.old"] <- "cell.type.ident"
+      #refactor
+      file_list[[i]]$cell.type.ident <- factor(file_list[[i]]$cell.type.ident)
+      file_list[[i]]$cell.type.ident1 <- factor(file_list[[i]]$cell.type.ident1)
+      
+    }
     #create new column in meta.data 
     #applied to all-she-pos and neuromast analysis
-        # if ("cell.type.ident" %in% colnames(file_list[[i]]@meta.data)){
-        #    print('changing metadata colnames')
-        #     file_list[[i]]@meta.data$cell.type.ident.by.data.set <- factor(paste(file_list[[i]]@meta.data$cell.type.ident,
-        #                                                                    file_list[[i]]@meta.data$data.set,sep="_"))
-        # }
+        if ("cell.type.ident" %in% colnames(file_list[[i]]@meta.data)){
+           print('changing metadata colnames')
+           file_list[[i]]@meta.data$cell.type.ident.by.data.set <- factor(paste(file_list[[i]]@meta.data$cell.type.ident,
+                                                                   file_list[[i]]@meta.data$data.set,sep="_"))
+        }
       
     if ("cell_type" %in% colnames(file_list[[i]]@meta.data)){
       print(files[i])
@@ -58,12 +76,18 @@ for (i in 1:length(files)) {
     }
     file_list[[i]]$cell.type.ident.by.data.set <- factor(file_list[[i]]$cell.type.ident.by.data.set)
     
-    #print("saving object...")
-   # saveRDS(file_list[[i]], file = files[i])
+   print("saving object...")
+   saveRDS(file_list[[i]], file = files[i])
   }
 }
 
+
+# =========================== reorder ================
 #reorder cell.type.ident.by.data.set in all-she-pos analysis & neuromast analysis
+cell.type <- c("mature-HCs","young-HCs","HC-prog" ,"central-cells", "DV-cells","AP-cells",  
+               "amp-SCs","mantle-cells", "Inm","c1qtnf5-pos", "clec14a-pos", "col1a1b-pos")
+treatments <- c("homeo" ,"0min" , "30min", "1hr", "1.5hr", "2hr", "3hr","5hr", "10hr")
+
 for (i in 1:1){
   print(file_list[[i]])
   Idents(file_list[[i]]) <- "cell.type.ident.by.data.set"
@@ -74,12 +98,37 @@ for (i in 1:1){
   file_list[[i]]@active.ident <- droplevels(file_list[[i]]@active.ident)
   file_list[[i]]$cell.type.ident.by.data.set <- droplevels(file_list[[i]]$cell.type.ident.by.data.set)
   Idents(file_list[[i]]) <- "cell.type.ident"
+  file_list[[i]]@active.ident <- factor(file_list[[i]]@active.ident, levels= cell.type)
+  file_list[[i]]$cell.type.ident <- factor(file_list[[i]]$cell.type.ident, 
+                                                       levels= cell.type)
+  file_list[[i]]@active.ident <- droplevels(file_list[[i]]@active.ident)
+  file_list[[i]]$cell.type.ident <- droplevels(file_list[[i]]$cell.type.ident)
   saveRDS(file_list[[i]], file = files[i])
+}
+
+# === reorder subsset idents
+files <- files[2:6]
+modifySeuratObj <-TRUE
+for (i in 1:length(files)) {
+  if (readSeuratObj){
+    print("Loading Seurat objects...")
+    file_list[[i]] <- readRDS(files[i])
+    DefaultAssay(file_list[[i]]) <- "RNA"
   }
+  if (modifySeuratObj){
+    file_list[[i]]$cell.type.ident <- droplevels(file_list[[i]]$cell.type.ident)
+    sub_ident <- levels(file_list[[i]]$cell.type.ident)
+    my_levels <- as.vector(t(outer(sub_ident, treatments, paste, sep="_"))) 
+    file_list[[i]]$cell.type.ident.by.data.set <- factor(file_list[[i]]$cell.type.ident.by.data.set, 
+                                                         levels= my_levels)
+  }
+  print("saving object...")
+  saveRDS(file_list[[i]], file = files[i])
+}
 
 # =============================== modify ptime regen objects
 readSeuratObj <- TRUE
-modifySeuratObj <-TRUE
+modifySeuratObj <-FALSE
 
 files <- files[7:9]
 file_list <- list()
@@ -103,9 +152,9 @@ for (i in 1:length(files)) {
     file_list[[i]]@meta.data$cell.type.ident.by.data.set <- gsub(pattern = "early-HCs", "young-HCs", 
     file_list[[i]]@meta.data$cell.type.ident.by.data.set)   
     file_list[[i]]$cell.type.ident.by.data.set <- factor(file_list[[i]]$cell.type.ident.by.data.set)
-    }
-  print(paste0("saving: ", files[i]))
-  saveRDS(file_list[[i]], file = files[i])
+  }
+  # print(paste0("saving: ", files[i]))
+  # saveRDS(file_list[[i]], file = files[i])
 }
 
 # =============================== reorder cell.type.ident, ptime objects
@@ -116,10 +165,55 @@ for (i in 1:3){
   Idents(file_list[[i]]) <- "cell.type.ident"
   file_list[[i]]@active.ident <- factor(file_list[[i]]@active.ident, levels= cell.type)
   file_list[[i]]$cell.type.ident <- factor(file_list[[i]]$cell.type.ident,
-                                                       levels= my_levels)
+                                                       levels= cell.type)
   file_list[[i]]@active.ident <- droplevels(file_list[[i]]@active.ident)
   file_list[[i]]$cell.type.ident <- droplevels(file_list[[i]]$cell.type.ident)
+  #drop levels for data.set
+  file_list[[i]]$data.set <- droplevels(file_list[[i]]$data.set)
+  
   print(paste0("saving: ", files[i]))
   saveRDS(file_list[[i]], file = files[i])
 }
+
+# ======= manual reorder of 
+
+ptime_home_regen <- file_list[[1]]
+type_treat_levels <- c( "homeo.central-cells", "0min.central-cells" , "30min.central-cells",
+                        "1hr.central-cells" ,  "1.5hr.central-cells" ,"2hr.central-cells",
+                        "3hr.central-cells" ,  "5hr.central-cells",   "1hr.HC-prog",
+                        "1.5hr.HC-prog"  ,     "2hr.HC-prog"   ,      "3hr.HC-prog",
+                        "5hr.HC-prog"    ,     "10hr.HC-prog"    ,    "homeo.HC-prog",
+                        "1.5hr.young-HCs"   ,  "2hr.young-HCs"   ,    "3hr.young-HCs",
+                        "5hr.young-HCs"   ,    "10hr.young-HCs"    ,  "2hr.mature-HCs", "3hr.mature-HCs"   ,
+                        "5hr.mature-HCs"   ,   "10hr.mature-HCs",
+                        "homeo.mature-HCs")
+ptime_home_regen$cell.type.ident.by.data.set <- factor(ptime_home_regen$cell.type.ident.by.data.set, levels = type_treat_levels)
+levels(ptime_home_regen$cell.type.ident.by.data.set)
+levels(ptime_home_regen$cell.type.ident)
+levels(ptime_home_regen$data.set)
+saveRDS(ptime_home_regen, file = files[1])
+
+ptime_regen <- file_list[[2]]
+type_treat_levels <- c("0min.central-cells" , "30min.central-cells", "1hr.central-cells",
+                       "1.5hr.central-cells" ,"2hr.central-cells" ,  "3hr.central-cells",
+                       "5hr.central-cells"  , "1hr.HC-prog"      ,   "1.5hr.HC-prog",
+                       "2hr.HC-prog" ,        "3hr.HC-prog"  ,       "5hr.HC-prog",
+                       "10hr.HC-prog"   ,     "1.5hr.young-HCs"   ,  "2hr.young-HCs",
+                       "3hr.young-HCs"   ,    "5hr.young-HCs"   ,    "10hr.young-HCs",
+                       "2hr.mature-HCs"   ,   "3hr.mature-HCs"  ,    "5hr.mature-HCs",
+                       "10hr.mature-HCs")
+ptime_regen$cell.type.ident.by.data.set <- factor(ptime_regen$cell.type.ident.by.data.set, levels = type_treat_levels)
+levels(ptime_regen$cell.type.ident.by.data.set)
+levels(ptime_regen$cell.type.ident)
+levels(ptime_regen$data.set)
+saveRDS(ptime_regen, file = files[2])
+
+
+ptime_homeo <- file_list[[3]]
+type_treat_levels <- c( "homeo.central-cells" ,"homeo.HC-prog"    ,   "homeo.young-HCs",
+                        "homeo.mature-HCs")
+ptime_homeo$cell.type.ident.by.data.set <- factor(ptime_homeo$cell.type.ident.by.data.set, levels = type_treat_levels)
+levels(ptime_homeo$cell.type.ident.by.data.set)
+levels(ptime_homeo$cell.type.ident)
+saveRDS(ptime_homeo, file = files[3])
 

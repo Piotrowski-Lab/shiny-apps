@@ -46,7 +46,7 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 									We therefore recommend using Ensembl gene IDs as input, 
 									as common gene names can change with annotation updates.',
 									'Cluster markers and related figures can be downloaded in',
-									tags$a(href = "http://bioinfo/n/projects/ddiaz/Analysis/Scripts/sb2191-regen/regen-summary/site/IntegratedData/",
+									tags$a(href = "https://webfs/n/projects/ddiaz/Analysis/Scripts/sb2191-regen/regen-summary/site/",
 										tags$b("this notebook")),
 									'. All genes used for this dataset can be downloaded below:'),
 
@@ -249,6 +249,121 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 	)
 	),
 
+# ================ # Stacked Vln Plts
+tabPanel("Stacked Violin Plots", #fluid = FALSE,
+         sidebarLayout(fluid = TRUE,
+                       
+                       sidebarPanel(fluid = FALSE, width = 4,
+                                    column(12, textInput("vlnStkdGenes", width = "100%",
+                                                         "Insert gene name or ensembl ID:",
+                                                         value = smpl_genes_sm)),
+                                    #column(12, tags$br()),
+                                    column(12, em("Please select no more than 3 genes at a time for computational efficiency")),
+                                    column(12, tags$br()),
+                                    
+                                    column(12, align = "center",
+                                           actionButton("runStkdVlnPlot", "Generate Plots",
+                                                        style = 'padding:5px; font-size:80%')),
+                                    
+                                    column(12, tags$hr(width = "50%"), align = "center"),
+                                    column(12, align = "center", downloadButton(
+                                      "downloadStkdVlnPlot", "Download pdf",
+                                      style = 'padding:5px; font-size:80%')),
+                                    
+                                    column(12, tags$br()),
+                                    column(12, align = "center", uiOutput("cellSelectStkdVln")), # New
+                                    
+                                    column(12, tags$br()),
+                                    column(12, align = "center",
+                                           column(6,
+                                                  radioGroupButtons("selectGrpStkdVln",
+                                                                    "Group cells by:", choices = list(Cluster = "data.set"), 
+                                                                    width = "100%")),
+                                           column(6,
+                                                  numericInput("ptSizeStkdVln", "Input cell size:", 
+                                                               value = 0.00, min = 0.00, step = 0.75, 
+                                                               max = 2.00, width = "80%"))
+                                    ),
+                                    
+                                    fluidRow(tags$br()),
+                                    fluidRow(tags$br()),
+                                    column(12, uiOutput("plot.uiDatFeatPlotV3"), align = "center"),
+                                    fluidRow(tags$br()),
+                                    fluidRow(tags$br())
+                       ),
+                       
+                       mainPanel(
+                         fluidRow(
+                           column(8, tags$br()),
+                           column(8, tags$b("Gene mismatches"), "(if present)", tags$b(":")),
+                           column(8,uiOutput("notInStkdVln")),
+                           column(8, tags$hr()),
+                           # column(8, tags$b(uiOutput("SelectedDataVln"))),
+                           column(12, uiOutput("plot.uiStkdVlnPlotF")
+                           )
+                         )
+                       )
+         )
+),
+
+# ================ # Gene Stacked Vln Plts
+tabPanel("Stacked Violin Plots by Gene", #fluid = FALSE,
+         sidebarLayout(fluid = TRUE,
+                       
+                       sidebarPanel(fluid = FALSE, width = 4,
+                                    column(12, textInput("vlnGStkdGenes", width = "100%",
+                                                         "Insert gene name or ensembl ID:",
+                                                         value = smpl_genes_sm)),
+                                    #column(12, tags$br()),
+                                    column(12, em("Please select no more than 3 genes at a time for computational efficiency")),
+                                    column(12, tags$br()),
+                                    
+                                    column(12, align = "center",
+                                           actionButton("runGStkdVlnPlot", "Generate Plots",
+                                                        style = 'padding:5px; font-size:80%')),
+                                    
+                                    column(12, tags$hr(width = "50%"), align = "center"),
+                                    column(12, align = "center", downloadButton(
+                                      "downloadGStkdVlnPlot", "Download pdf",
+                                      style = 'padding:5px; font-size:80%')),
+                                    
+                                    column(12, tags$br()),
+                                    column(12, align = "center", uiOutput("cellSelectGStkdVln")), # New
+                                    
+                                    column(12, tags$br()),
+                                    column(12, align = "center",
+                                           column(6,
+                                                  radioGroupButtons("selectGrpGStkdVln",
+                                                                    "Group cells by:", choices = list(Combined = "cell.type.ident.by.data.set",
+                                                                    Cluster = "cell.type.ident",
+                                                                    Time = "data.set"), 
+                                                                    width = "100%",size = "xs")),
+                                           column(6,
+                                                  numericInput("ptSizeGStkdVln", "Input cell size:", 
+                                                               value = 0.00, min = 0.00, step = 0.75, 
+                                                               max = 2.00, width = "80%"))
+                                    ),
+                                    
+                                    fluidRow(tags$br()),
+                                    fluidRow(tags$br()),
+                                    column(12, uiOutput("plot.uiDatFeatPlotV9"), align = "center"),
+                                    fluidRow(tags$br()),
+                                    fluidRow(tags$br())
+                       ),
+                       
+                       mainPanel(
+                         fluidRow(
+                           column(8, tags$br()),
+                           column(8, tags$b("Gene mismatches"), "(if present)", tags$b(":")),
+                           column(8,uiOutput("notInGStkdVln")),
+                           column(8, tags$hr()),
+                           # column(8, tags$b(uiOutput("SelectedDataVln"))),
+                           column(12, uiOutput("plot.uiGStkdVlnPlotF")
+                           )
+                         )
+                       )
+         )
+),
 
 # ================ #
 # tabPanel("Ridge Plots", #fluid = FALSE,
@@ -364,10 +479,10 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 #   column(11, style = "padding-top: 8px;",
 #     switchInput("manAdjustDot", value = FALSE))),
 					column(3, align = "left", numericInput(
-							"manAdjustDotW", label = "Width (pixels):", value = 2400, step = 50,
+							"manAdjustDotW", label = "Width (inches):", value = 24, step = 50,
 							width = "100%")),
 					column(3,  align = "left", numericInput(
-							"manAdjustDotH", label = "Height (pixels):", value = 900, step = 50,
+							"manAdjustDotH", label = "Height (inches):", value = 9, step = 50,
 							width = "100%"))
 				      ),
 				fluidRow(tags$br()),
@@ -429,10 +544,10 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 				column(8, tags$hr()),
 				column(8, align = "left",
 					column(3, align = "left", numericInput(
-							"manAdjustHmapW", label = "Width (pixels):", value = 2400, step = 50,
+							"manAdjustHmapW", label = "Width (inches):", value = 24, step = 50,
 							width = "100%")),
 					column(3,  align = "left", numericInput(
-							"manAdjustHmapH", label = "Height (pixels):", value = 900, step = 50,
+							"manAdjustHmapH", label = "Height (inches):", value = 9, step = 50,
 							width = "100%"))
 				      ),
 				fluidRow(tags$br()),
@@ -497,10 +612,10 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 				column(8, tags$hr()),
 				column(8, align = "left",
 					column(3, align = "left", numericInput(
-							"manAdjustIndvHmapW", label = "Width (pixels):", value = 2400, step = 50,
+							"manAdjustIndvHmapW", label = "Width (inches):", value = 24, step = 50,
 							width = "100%")),
 					column(3,  align = "left", numericInput(
-							"manAdjustIndvHmapH", label = "Height (pixels):", value = 900, step = 50,
+							"manAdjustIndvHmapH", label = "Height (inches):", value = 9, step = 50,
 							width = "100%"))
 				      ),
 				fluidRow(tags$br()),

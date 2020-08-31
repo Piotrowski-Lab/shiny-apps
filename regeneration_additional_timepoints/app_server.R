@@ -130,11 +130,11 @@ server <- function(input, output) {
     
     seurat_obj <- SelectDataset()
 
-    if (input$Analysis == "neuromast-cells") {
+    if (input$Analysis == "neuromast-cells" | input$Analysis == "neuromast-and-skin") {
       umap_clusters <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                                label = TRUE, label.size = 0, group.by = "cell.type.ident",
                                cols = cluster_clrs)
-    } else if (input$Analysis == "HC-lineage-regen" || input$Analysis == "HC-lineage-homeo" || input$Analysis == "HC-lineage-homeo-and-regen") {
+    } else if (input$Analysis %in% ptime_analysis) {
       umap_clusters <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                                label = TRUE, label.size = 0, group.by = "cell.type.ident.by.data.set",
                                cols = gg_color_hue(length(levels(seurat_obj$cell.type.ident.by.data.set))))
@@ -175,7 +175,7 @@ server <- function(input, output) {
     plotOutput("myDatFeatPlotH1", width = "925px", height = "525px")
   })
   
-  n_panels <- 1:8
+  n_panels <- 1:9
   
   lapply(n_panels, function(i) {
     output[[paste0("myDatFeatPlotV", i)]] <- 
@@ -389,6 +389,293 @@ server <- function(input, output) {
     }
   )
   
+  # # ======== Stacked Violin Plot ======== #
+  # 
+  StkdVlnPlotF <- reactive({
+    seurat_obj <- SelectDataset()
+    selected <- unlist(strsplit(input$vlnStkdGenes, " "))
+    
+    ifelse(selected %in% com_name,
+           selected <- selected[selected %in% com_name],
+           
+           ifelse(selected %in% ens_id,
+                  selected <- gene_df[ens_id %in% selected, 3],"")
+    )
+    
+    seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsStkdVln]
+    
+    ids <- as.list(levels(seurat_obj$data.set))
+    
+    
+    gg_color_hue <- function(n) {
+      hues = seq(15, 375, length = n + 1)
+      hcl(h = hues, l = 65, c = 100)[1:n]
+    }
+    
+    ## extract the max value of the y axis
+    extract_max<- function(p){
+      ymax<- max(ggplot_build(p)$layout$panel_scales_y[[1]]$range$range)
+      return(ceiling(ymax))
+    }
+    
+    
+    obj_trt_list <- list()[1:length(ids)]
+    
+    for (i in 1:length(ids)) {
+      print(ids[[i]])
+      #seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsStkdVln]
+
+      obj_trt_list[[i]] <- seurat_obj[,seurat_obj[["data.set"]] == ids[[i]]]
+    }
+    
+    stacked_violin_plot <- function(goi, obj_trt_list){
+      trt_plot_list <- list()[1:length(ids)]
+      names(trt_plot_list) <- ids
+      for (i in 1:length(ids)) {
+        vln_obj <- VlnPlot(
+          obj_trt_list[[i]], features = goi, pt.size = 0.0) +
+          xlab("") + ylab(ids[i]) + ggtitle("") +
+          theme(legend.position = "none", axis.text.x = element_blank(),
+                axis.ticks.x = element_blank(),
+                axis.title.y = element_text(size = rel(1), angle = 0),
+                axis.text.y = element_text(size = rel(1)),
+                plot.margin = unit(c(-1.5, 0.5, -1.5, 0.5), "cm"))
+        if (input$Analysis %in% ptime_analysis){
+        vln_obj <- VlnPlot(
+          obj_trt_list[[i]], features = goi, pt.size = 0.0) +
+          xlab("") + ylab(ids[i]) + ggtitle("") +
+          theme(legend.position = "none", axis.text.x = element_blank(),
+                axis.ticks.x = element_blank(),
+                axis.title.y = element_text(size = rel(1), angle = 0),
+                axis.text.y = element_text(size = rel(1)),
+                plot.margin = unit(c(-1.5, 0.5, -1.5, 0.5), "cm")) +
+          scale_x_discrete(limits = c("central-cells","HC-prog","young-HCs","mature-HCs"))
+        #placeholders
+        }
+        
+        trt_plot_list[[i]] <- vln_obj
+      }
+      
+      trt_plot_list[[length(trt_plot_list)]]<- trt_plot_list[[length(trt_plot_list)]] +
+        theme(axis.text.x=element_text(angle = 90), axis.ticks.x = element_line())
+      # change the y-axis tick to only max value, treats ymax from each obj_trt_list independently
+      ymaxs <- purrr::map_dbl(trt_plot_list, extract_max)
+      #finds highest ymax, normalize
+      ymaxs<- max(sapply(ymaxs, max))
+      trt_plot_list <- purrr::map2(trt_plot_list, ymaxs, function(x, y) x +
+                                     scale_y_continuous(breaks = c(y)) + expand_limits(y = y))
+      grid_obj <- cowplot::plot_grid(plotlist = trt_plot_list,
+                                     nrow = length(ids), ncol = 1, axis = "l", align = "hv") + #rel_heights  = c(1,1,1,1,1,1)) +
+        theme(plot.margin = margin(unit(c(-0.75, 0, -0.75, 0), "cm"))) +
+        ggtitle(goi) + theme(plot.title = element_text(hjust = 0.5, face = "bold", margin = margin(.5, 0 ,.5,0,unit = "cm"))) 
+      
+      
+      return(grid_obj)
+      
+    }
+    grid_obj <- list()[1:length(selected)]
+    for (i in 1:length(selected)){
+      print(selected[[i]])
+      options(repr.plot.width = 12, repr.plot.height = 3)
+      
+      grid_obj[[i]] <- stacked_violin_plot(goi = selected[[i]], obj_trt_list = obj_trt_list)
+      
+    }
+    names(grid_obj) <- selected
+    
+    final_grid <- cowplot::plot_grid(plotlist = grid_obj, nrow = length(grid_obj), axis = "l", align = "hv", scale = 0.9) +
+      theme(plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"))
+    
+    return(final_grid)
+    
+  })
+  
+  output$cellSelectStkdVln <- renderUI({ # New cell type select
+    pickerInput("cellIdentsStkdVln", "Add or remove clusters:",
+                choices = as.character(printIdents()), multiple = TRUE,
+                selected = as.character(printIdents()), options = list(
+                  `actions-box` = TRUE), width = "85%")
+  })
+  
+  mismatchStkdVln <- function() {
+    selected <- unlist(strsplit(input$vlnStkdGenes, " "))
+    
+    mismatch <- ifelse(!selected %in% c(com_name,ens_id),
+                       selected[!selected %in% c(com_name,ens_id)],"")
+    return(mismatch)
+  }
+  
+  output$notInStkdVln <- renderText({input$runStkdVlnPlot
+    isolate({mismatchStkdVln()})
+  })
+  
+  output$SelectedDataStkdVln <- renderText({input$runStkdVlnPlot
+    isolate({input$Analysis})
+  })
+  
+  output$myStkdVlnPlotF <- renderPlot({input$runStkdVlnPlot
+    isolate({withProgress({p <- StkdVlnPlotF(); print(p)},
+                          message = "Rendering plot..",
+                          min = 0, max = 10, value = 10)
+    })
+  })
+  
+  getHeightStkdVln <- function() {
+    l <- getLenInput(input$vlnStkdGenes)
+    if (l == 1) {h <- "800"
+    } else {
+      h <- as.numeric(ceiling(l) * 675)
+      #h <- paste0(h, "px")
+    }
+    return(h)
+  }
+  
+  output$plot.uiStkdVlnPlotF <- renderUI({input$runStkdVlnPlot
+    isolate({h <- getHeightStkdVln(); plotOutput("myStkdVlnPlotF",
+                                                 width = "800px", height = paste0(h, "px"))})
+  })
+  
+  output$downloadStkdVlnPlot <- downloadHandler(
+    filename = "StkdViolin_plot.pdf", content = function(file) {
+      png(file,
+          width = 800,
+          height = getHeightStkdVln() ,units = "px" )#* getLenInput(input$vlnStkdGenes))
+      print(StkdVlnPlotF())
+      dev.off()
+    }
+  )
+  
+  # # ======== Gene Stacked Violin Plot ======== #
+  # 
+  GStkdVlnPlotF <- reactive({
+    seurat_obj <- SelectDataset()
+    selected <- unlist(strsplit(input$vlnGStkdGenes, " "))
+    
+    ifelse(selected %in% com_name,
+           selected <- selected[selected %in% com_name],
+           
+           ifelse(selected %in% ens_id,
+                  selected <- gene_df[ens_id %in% selected, 3],"")
+    )
+    
+    seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsGStkdVln]
+    
+    group.by <- input$selectGrpGStkdVln
+    
+    if(input$Analysis %notin% multiple_idents_seurObj && input$selectGrpGStkdVln == "cell.type.ident"){
+      group.by <- "seurat_clusters"
+    }
+    
+    p_size <- as.numeric(input$ptSizeGStkdVln)
+    
+    modify_vlnplot<- function(obj, 
+                              feature, 
+                              pt.size = p_size, 
+                              plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),
+                              grouped = group.by) {
+      p<- VlnPlot(obj, features = feature, pt.size = pt.size, group.by = grouped )  + 
+        xlab("") + ylab(feature) + ggtitle("") + 
+        theme(legend.position = "none", 
+              axis.text.x = element_blank(), 
+              axis.ticks.x = element_blank(), 
+              axis.title.y = element_text(size = rel(1), angle = 0), 
+              axis.text.y = element_text(size = rel(1)), 
+              plot.margin = plot.margin ) 
+      return(p)
+    }
+    
+    ## extract the max value of the y axis
+    extract_max<- function(p){
+      ymax<- max(ggplot_build(p)$layout$panel_scales_y[[1]]$range$range)
+      return(ceiling(ymax))
+    }
+    
+    
+    ## main function
+    StackedVlnPlot<- function(obj, features,
+                              pt.size = 0, 
+                              plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),
+                              ...) {
+      
+      plot_list<- purrr::map(features, function(x) modify_vlnplot(obj = obj,feature = x, grouped = group.by, pt.size = p_size))
+      
+      # Add back x-axis title to bottom plot. patchwork is going to support this?
+      plot_list[[length(plot_list)]]<- plot_list[[length(plot_list)]] +
+        theme(axis.text.x=element_text(angle = 90), axis.ticks.x = element_line())
+      
+      # change the y-axis tick to only max value 
+      ymaxs<- purrr::map_dbl(plot_list, extract_max)
+      #finds highest ymax, normalize
+      ymaxs<- max(sapply(ymaxs, max))
+      plot_list<- purrr::map2(plot_list, ymaxs, function(x,y) x + 
+                                scale_y_continuous(breaks = c(y)) + 
+                                expand_limits(y = y))
+      
+      p<- patchwork::wrap_plots(plotlist = plot_list, ncol = 1)
+      return(p)
+    }
+    
+    g <- StackedVlnPlot(obj = seurat_obj, features = selected)
+    
+    return(g)
+    
+    
+  })
+  
+  output$cellSelectGStkdVln <- renderUI({ # New cell type select
+    pickerInput("cellIdentsGStkdVln", "Add or remove clusters:",
+                choices = as.character(printIdents()), multiple = TRUE,
+                selected = as.character(printIdents()), options = list(
+                  `actions-box` = TRUE), width = "85%")
+  })
+  
+  mismatchGStkdVln <- function() {
+    selected <- unlist(strsplit(input$vlnGStkdGenes, " "))
+    
+    mismatch <- ifelse(!selected %in% c(com_name,ens_id),
+                       selected[!selected %in% c(com_name,ens_id)],"")
+    return(mismatch)
+  }
+  
+  output$notInGStkdVln <- renderText({input$runGStkdVlnPlot
+    isolate({mismatchGStkdVln()})
+  })
+  
+  output$SelectedDataGStkdVln <- renderText({input$runGStkdVlnPlot
+    isolate({input$Analysis})
+  })
+  
+  output$myGStkdVlnPlotF <- renderPlot({input$runGStkdVlnPlot
+    isolate({withProgress({p <- GStkdVlnPlotF(); print(p)},
+                          message = "Rendering plot..",
+                          min = 0, max = 10, value = 10)
+    })
+  })
+  
+  getHeightGStkdVln <- function() {
+    l <- getLenInput(input$vlnGStkdGenes)
+    if (l == 1) {h <- "800"
+    } else {
+      h <- as.numeric(ceiling(l) * 175)
+      #h <- paste0(h, "px")
+    }
+    return(h)
+  }
+  
+  output$plot.uiGStkdVlnPlotF <- renderUI({input$runGStkdVlnPlot
+    isolate({h <- getHeightGStkdVln(); plotOutput("myGStkdVlnPlotF",
+                                                 width = "800px", height = paste0(h, "px"))})
+  })
+  
+  output$downloadGStkdVlnPlot <- downloadHandler(
+    filename = "GStkdViolin_plot.pdf", content = function(file) {
+      png(file,
+          width = 800,
+          height = getHeightGStkdVln() ,units = "px" )#* getLenInput(input$vlnStkdGenes))
+      print(GStkdVlnPlotF())
+      dev.off()
+    }
+  )
   
   # # ======== Ridge Plot ======== #
   # RdgPlotF <- reactive({
@@ -546,24 +833,26 @@ server <- function(input, output) {
       
       print(input$cellIdentsDot)
 
-      g <- DotPlot(seurat_obj, features = selected,
+      g <- DotPlot(seurat_obj, features = rev(selected),
                    cols = "RdYlBu", dot.scale = input$dotScale,
                    group.by = input$selectGrpDot)
       
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
-        theme(plot.title = element_text(face = "plain", size = 14))
+        theme(plot.title = element_text(face = "plain", size = 14)) 
+      
       
       g <- g + coord_flip() + theme(
-        axis.text.x = element_text(angle = 90, hjust = 1))
+        axis.text.x = element_text(angle = 90, hjust = 1)) 
       if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpDot == "cell.type.ident") {
-        g <- DotPlot(seurat_obj, features = selected,
+        g <- DotPlot(seurat_obj, features = rev(selected),
                      cols = "RdYlBu", dot.scale = input$dotScale,
                      group.by = "seurat_clusters")
 
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
-          theme(plot.title = element_text(face = "plain", size = 14))
+          theme(plot.title = element_text(face = "plain", size = 14)) +
+          ylim(rev(levels(g$data$features.plot))) 
 
         g <- g + coord_flip() + theme(
           axis.text.x = element_text(angle = 90, hjust = 1))
@@ -604,7 +893,7 @@ server <- function(input, output) {
   
   getHeightDot <- function() {
     l <- getLenInput(input$dotGenes)
-    h <- paste0(as.character(l * 35), "px")
+    h <- paste0(as.character(l * 35), "in")
     return(h)
   }
   
@@ -635,14 +924,14 @@ server <- function(input, output) {
   
   output$plot.uiDotPlotF <- renderUI({input$runDotPlot
     isolate({h <- getHeightDot(); plotOutput("myDotPlotF",
-                                             width = paste0(input$manAdjustDotW, "px"),
-                                             height = paste0(input$manAdjustDotH, "px"))})
+                                             width = paste0(input$manAdjustDotW, "in"),
+                                             height = paste0(input$manAdjustDotH, "in"))})
   })
   
   output$downloadDotPlot <- downloadHandler(
     filename = "dot_plot.png", content = function(file) {
       png(file, height = as.numeric(input$manAdjustDotH),
-          width = as.numeric(input$manAdjustDotW), units = "px")
+          width = as.numeric(input$manAdjustDotW), units = "in", res = 300)
       print(DotPlotF())
       dev.off()
     }
@@ -767,7 +1056,7 @@ server <- function(input, output) {
       dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
       
       #applies to ptime objects
-      if(input$Analysis %in% multiple_idents_seurObj[2:4]){
+      if(input$Analysis %in% ptime_analysis){
         dotplot$data$groupIdent <- gsub("^.*\\.", "",dotplot$data$id)
         dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
       }
@@ -780,7 +1069,7 @@ server <- function(input, output) {
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
               strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
-        facet_grid( ~ groupIdent, scales='free_x')
+        facet_grid( ~ groupIdent, scales='free_x') 
       
       
       g <- g + labs(title = paste("Selected analysis:",
@@ -801,7 +1090,7 @@ server <- function(input, output) {
           theme_ipsum()+
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
                 axis.title.y.right = element_text(size=13),
-                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12))
+                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) 
         
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -831,7 +1120,7 @@ server <- function(input, output) {
       dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
       
       #applies to ptime objects
-      if(input$Analysis %in% multiple_idents_seurObj[2:3]){
+      if(input$Analysis %in% ptime_analysis){
         dotplot$data$groupIdent <- gsub("^.*\\.", "",dotplot$data$id)
         dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
       }
@@ -844,7 +1133,8 @@ server <- function(input, output) {
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
               strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
-        facet_grid( ~ groupIdent, scales='free_x')
+        facet_grid( ~ groupIdent, scales='free_x') +
+        ylim(rev(levels(dotplot$data$features.plot))) 
        
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -865,7 +1155,8 @@ server <- function(input, output) {
           theme_ipsum()+
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
                 axis.title.y.right = element_text(size=13),
-                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12))
+                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
+          ylim(rev(levels(dotplot$data$features.plot))) 
         
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -934,15 +1225,16 @@ server <- function(input, output) {
   # 
   output$plot.uiPheatmapF <- renderUI({input$runPhmap
     isolate({h <- getHeightPhmap(); plotOutput("myPhmapF",
-                                               width = paste0(input$manAdjustHmapW, "px"),
-                                               height = paste0(input$manAdjustHmapH, "px"))})
+                                               width = paste0(input$manAdjustHmapW, "in"),
+                                               height = paste0(input$manAdjustHmapH, "in"))})
   })
   
   #download
   output$downloadhmap <- downloadHandler(
     filename = "heatmap.png", content = function(file) {
       png(file, height = as.numeric(input$manAdjustHmapH),
-          width = as.numeric(input$manAdjustHmapW), units = "px")
+          width = as.numeric(input$manAdjustHmapW), units = "in", 
+          res = 300)
       print(pHeatmapF())
       dev.off()
     }
@@ -1020,7 +1312,7 @@ server <- function(input, output) {
               axis.ticks.x=element_blank(),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
               strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
-        facet_grid( ~ id, space = 'free', scales = 'free')
+        facet_grid( ~ id, space = 'free', scales = 'free') 
       
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1073,7 +1365,7 @@ server <- function(input, output) {
                 axis.ticks.x=element_blank(),
                 axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
                 strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
-          facet_grid( ~ id, space = 'free', scales = 'free')
+          facet_grid( ~ id, space = 'free', scales = 'free') 
         
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1147,7 +1439,8 @@ server <- function(input, output) {
               axis.ticks.x=element_blank(),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
               strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
-        facet_grid( ~ id, space = 'free', scales = 'free')
+        facet_grid( ~ id, space = 'free', scales = 'free') +
+        ylim(rev(levels(data$Feature))) 
       
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1201,7 +1494,8 @@ server <- function(input, output) {
                 axis.ticks.x=element_blank(),
                 axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
                 strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
-          facet_grid( ~ id, space = 'free', scales = 'free')
+          facet_grid( ~ id, space = 'free', scales = 'free') +
+          ylim(rev(levels(data$Feature))) 
         
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1278,15 +1572,15 @@ server <- function(input, output) {
   
   output$plot.uiIndvpHeatmapF <- renderUI({input$runIndvPhmap
     isolate({h <- getHeightIndvPhmap(); plotOutput("myIndvPhmapF",
-                                                   width = paste0(input$manAdjustIndvHmapW, "px"),
-                                                   height = paste0(input$manAdjustIndvHmapH, "px"))})
+                                                   width = paste0(input$manAdjustIndvHmapW, "in"),
+                                                   height = paste0(input$manAdjustIndvHmapH, "in"))})
   })
   
   #download
   output$downloadIndvhmap <- downloadHandler(
     filename = "IndvHeatmap.png", content = function(file) {
       png(file, height = as.numeric(input$manAdjustIndvHmapH),
-          width = as.numeric(input$manAdjustIndvHmapW), units = "px")
+          width = as.numeric(input$manAdjustIndvHmapW), units = "in", res = 300)
       print(IndvpHeatmapF())
       dev.off()
     }
