@@ -46,7 +46,7 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 									We therefore recommend using Ensembl gene IDs as input, 
 									as common gene names can change with annotation updates.',
 									'Cluster markers and related figures can be downloaded in',
-									tags$a(href = "http://bioinfo/n/projects/ddiaz/Analysis/Scripts/sb2191-regen/regen-summary/site/IntegratedData/",
+									tags$a(href = "https://webfs/n/projects/ddiaz/Analysis/Scripts/sb2191-regen/regen-summary/site/",
 										tags$b("this notebook")),
 									'. All genes used for this dataset can be downloaded below:'),
 
@@ -479,10 +479,10 @@ tabPanel("Stacked Violin Plots by Gene", #fluid = FALSE,
 #   column(11, style = "padding-top: 8px;",
 #     switchInput("manAdjustDot", value = FALSE))),
 					column(3, align = "left", numericInput(
-							"manAdjustDotW", label = "Width (pixels):", value = 2400, step = 50,
+							"manAdjustDotW", label = "Width (inches):", value = 24, step = 50,
 							width = "100%")),
 					column(3,  align = "left", numericInput(
-							"manAdjustDotH", label = "Height (pixels):", value = 900, step = 50,
+							"manAdjustDotH", label = "Height (inches):", value = 9, step = 50,
 							width = "100%"))
 				      ),
 				fluidRow(tags$br()),
@@ -544,10 +544,10 @@ tabPanel("Stacked Violin Plots by Gene", #fluid = FALSE,
 				column(8, tags$hr()),
 				column(8, align = "left",
 					column(3, align = "left", numericInput(
-							"manAdjustHmapW", label = "Width (pixels):", value = 2400, step = 50,
+							"manAdjustHmapW", label = "Width (inches):", value = 24, step = 50,
 							width = "100%")),
 					column(3,  align = "left", numericInput(
-							"manAdjustHmapH", label = "Height (pixels):", value = 900, step = 50,
+							"manAdjustHmapH", label = "Height (inches):", value = 9, step = 50,
 							width = "100%"))
 				      ),
 				fluidRow(tags$br()),
@@ -612,10 +612,10 @@ tabPanel("Stacked Violin Plots by Gene", #fluid = FALSE,
 				column(8, tags$hr()),
 				column(8, align = "left",
 					column(3, align = "left", numericInput(
-							"manAdjustIndvHmapW", label = "Width (pixels):", value = 2400, step = 50,
+							"manAdjustIndvHmapW", label = "Width (inches):", value = 24, step = 50,
 							width = "100%")),
 					column(3,  align = "left", numericInput(
-							"manAdjustIndvHmapH", label = "Height (pixels):", value = 900, step = 50,
+							"manAdjustIndvHmapH", label = "Height (inches):", value = 9, step = 50,
 							width = "100%"))
 				      ),
 				fluidRow(tags$br()),

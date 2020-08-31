@@ -833,24 +833,26 @@ server <- function(input, output) {
       
       print(input$cellIdentsDot)
 
-      g <- DotPlot(seurat_obj, features = selected,
+      g <- DotPlot(seurat_obj, features = rev(selected),
                    cols = "RdYlBu", dot.scale = input$dotScale,
                    group.by = input$selectGrpDot)
       
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
-        theme(plot.title = element_text(face = "plain", size = 14))
+        theme(plot.title = element_text(face = "plain", size = 14)) 
+      
       
       g <- g + coord_flip() + theme(
-        axis.text.x = element_text(angle = 90, hjust = 1))
+        axis.text.x = element_text(angle = 90, hjust = 1)) 
       if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpDot == "cell.type.ident") {
-        g <- DotPlot(seurat_obj, features = selected,
+        g <- DotPlot(seurat_obj, features = rev(selected),
                      cols = "RdYlBu", dot.scale = input$dotScale,
                      group.by = "seurat_clusters")
 
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
-          theme(plot.title = element_text(face = "plain", size = 14))
+          theme(plot.title = element_text(face = "plain", size = 14)) +
+          ylim(rev(levels(g$data$features.plot))) 
 
         g <- g + coord_flip() + theme(
           axis.text.x = element_text(angle = 90, hjust = 1))
@@ -891,7 +893,7 @@ server <- function(input, output) {
   
   getHeightDot <- function() {
     l <- getLenInput(input$dotGenes)
-    h <- paste0(as.character(l * 35), "px")
+    h <- paste0(as.character(l * 35), "in")
     return(h)
   }
   
@@ -922,14 +924,14 @@ server <- function(input, output) {
   
   output$plot.uiDotPlotF <- renderUI({input$runDotPlot
     isolate({h <- getHeightDot(); plotOutput("myDotPlotF",
-                                             width = paste0(input$manAdjustDotW, "px"),
-                                             height = paste0(input$manAdjustDotH, "px"))})
+                                             width = paste0(input$manAdjustDotW, "in"),
+                                             height = paste0(input$manAdjustDotH, "in"))})
   })
   
   output$downloadDotPlot <- downloadHandler(
     filename = "dot_plot.png", content = function(file) {
       png(file, height = as.numeric(input$manAdjustDotH),
-          width = as.numeric(input$manAdjustDotW), units = "px")
+          width = as.numeric(input$manAdjustDotW), units = "in", res = 300)
       print(DotPlotF())
       dev.off()
     }
@@ -1067,7 +1069,7 @@ server <- function(input, output) {
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
               strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
-        facet_grid( ~ groupIdent, scales='free_x')
+        facet_grid( ~ groupIdent, scales='free_x') 
       
       
       g <- g + labs(title = paste("Selected analysis:",
@@ -1088,7 +1090,7 @@ server <- function(input, output) {
           theme_ipsum()+
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
                 axis.title.y.right = element_text(size=13),
-                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12))
+                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) 
         
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1131,7 +1133,8 @@ server <- function(input, output) {
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
               strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
-        facet_grid( ~ groupIdent, scales='free_x')
+        facet_grid( ~ groupIdent, scales='free_x') +
+        ylim(rev(levels(dotplot$data$features.plot))) 
        
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1152,7 +1155,8 @@ server <- function(input, output) {
           theme_ipsum()+
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
                 axis.title.y.right = element_text(size=13),
-                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12))
+                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
+          ylim(rev(levels(dotplot$data$features.plot))) 
         
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1221,15 +1225,16 @@ server <- function(input, output) {
   # 
   output$plot.uiPheatmapF <- renderUI({input$runPhmap
     isolate({h <- getHeightPhmap(); plotOutput("myPhmapF",
-                                               width = paste0(input$manAdjustHmapW, "px"),
-                                               height = paste0(input$manAdjustHmapH, "px"))})
+                                               width = paste0(input$manAdjustHmapW, "in"),
+                                               height = paste0(input$manAdjustHmapH, "in"))})
   })
   
   #download
   output$downloadhmap <- downloadHandler(
     filename = "heatmap.png", content = function(file) {
       png(file, height = as.numeric(input$manAdjustHmapH),
-          width = as.numeric(input$manAdjustHmapW), units = "px")
+          width = as.numeric(input$manAdjustHmapW), units = "in", 
+          res = 300)
       print(pHeatmapF())
       dev.off()
     }
@@ -1307,7 +1312,7 @@ server <- function(input, output) {
               axis.ticks.x=element_blank(),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
               strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
-        facet_grid( ~ id, space = 'free', scales = 'free')
+        facet_grid( ~ id, space = 'free', scales = 'free') 
       
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1360,7 +1365,7 @@ server <- function(input, output) {
                 axis.ticks.x=element_blank(),
                 axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
                 strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
-          facet_grid( ~ id, space = 'free', scales = 'free')
+          facet_grid( ~ id, space = 'free', scales = 'free') 
         
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1434,7 +1439,8 @@ server <- function(input, output) {
               axis.ticks.x=element_blank(),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
               strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
-        facet_grid( ~ id, space = 'free', scales = 'free')
+        facet_grid( ~ id, space = 'free', scales = 'free') +
+        ylim(rev(levels(data$Feature))) 
       
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1488,7 +1494,8 @@ server <- function(input, output) {
                 axis.ticks.x=element_blank(),
                 axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
                 strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
-          facet_grid( ~ id, space = 'free', scales = 'free')
+          facet_grid( ~ id, space = 'free', scales = 'free') +
+          ylim(rev(levels(data$Feature))) 
         
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1565,15 +1572,15 @@ server <- function(input, output) {
   
   output$plot.uiIndvpHeatmapF <- renderUI({input$runIndvPhmap
     isolate({h <- getHeightIndvPhmap(); plotOutput("myIndvPhmapF",
-                                                   width = paste0(input$manAdjustIndvHmapW, "px"),
-                                                   height = paste0(input$manAdjustIndvHmapH, "px"))})
+                                                   width = paste0(input$manAdjustIndvHmapW, "in"),
+                                                   height = paste0(input$manAdjustIndvHmapH, "in"))})
   })
   
   #download
   output$downloadIndvhmap <- downloadHandler(
     filename = "IndvHeatmap.png", content = function(file) {
       png(file, height = as.numeric(input$manAdjustIndvHmapH),
-          width = as.numeric(input$manAdjustIndvHmapW), units = "px")
+          width = as.numeric(input$manAdjustIndvHmapW), units = "in", res = 300)
       print(IndvpHeatmapF())
       dev.off()
     }

@@ -1,4 +1,4 @@
-library(devtools)
+{library(devtools)
 #dev_mode(on=T)
 #devtools::install_github(repo = 'satijalab/seurat', ref = 'develop')
 library(Seurat)
@@ -18,7 +18,7 @@ if (TRUE) {
 }
 files <- list.files(".", pattern = "TRIMMED", full.names = TRUE)
 file_list <- list()
-
+}
 
 readSeuratObj <- TRUE
 
@@ -29,7 +29,7 @@ for (i in 1:length(files)) {
     DefaultAssay(file_list[[i]]) <- "RNA"
   }
 }
-seurat_obj <- file_list[[2]] #ptime homeo and regen combined
+seurat_obj <- file_list[[9]] #ptime homeo and regen combined
 
 seurat_obj$data.set <- droplevels(seurat_obj$data.set)
 ids <- as.list(levels(seurat_obj$data.set))
@@ -132,7 +132,9 @@ g <- ggplot(dotplot$data, aes(id, features.plot,fill= avg.exp.scaled, width = 1,
     palette = "RdYlBu") +
   theme_ipsum()+
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
-        axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines")) + facet_grid( ~ groupIdent, scales='free_x')
+        axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines")) + 
+  facet_grid( ~ groupIdent, scales='free_x') +
+  ylim(rev(levels(dotplot$data$features.plot))) 
 
 g
 

@@ -104,7 +104,27 @@ for (i in 1:1){
   file_list[[i]]@active.ident <- droplevels(file_list[[i]]@active.ident)
   file_list[[i]]$cell.type.ident <- droplevels(file_list[[i]]$cell.type.ident)
   saveRDS(file_list[[i]], file = files[i])
+}
+
+# === reorder subsset idents
+files <- files[2:6]
+modifySeuratObj <-TRUE
+for (i in 1:length(files)) {
+  if (readSeuratObj){
+    print("Loading Seurat objects...")
+    file_list[[i]] <- readRDS(files[i])
+    DefaultAssay(file_list[[i]]) <- "RNA"
   }
+  if (modifySeuratObj){
+    file_list[[i]]$cell.type.ident <- droplevels(file_list[[i]]$cell.type.ident)
+    sub_ident <- levels(file_list[[i]]$cell.type.ident)
+    my_levels <- as.vector(t(outer(sub_ident, treatments, paste, sep="_"))) 
+    file_list[[i]]$cell.type.ident.by.data.set <- factor(file_list[[i]]$cell.type.ident.by.data.set, 
+                                                         levels= my_levels)
+  }
+  print("saving object...")
+  saveRDS(file_list[[i]], file = files[i])
+}
 
 # =============================== modify ptime regen objects
 readSeuratObj <- TRUE
