@@ -60,7 +60,7 @@ server <- function(input, output) {
   # ======== Gene Database ======== #
   GeneDB <- function() {
     seurat_obj <- SelectDataset()
-    selected <- unlist(strsplit(input$dbGenes, " "))
+    selected <- unique(unlist(strsplit(input$dbGenes, " ")))
     
     present <- gene_df$Gene.name.uniq %in% rownames(seurat_obj)
     gene_df <- cbind(in_dataset = present, gene_df)
@@ -192,7 +192,7 @@ server <- function(input, output) {
   # ======== Feature Plot ======== #
   FeaturePlotF <- reactive({
     seurat_obj <- SelectDataset()
-    selected <- unlist(strsplit(input$featureGenes, " "))
+    selected <- unique(unlist(strsplit(input$featureGenes, " ")))
     
     ifelse(selected %in% com_name,
            selected <- selected[selected %in% com_name],
@@ -234,7 +234,7 @@ server <- function(input, output) {
   })
   
   mismatchFeat <- function() {
-    selected <- unlist(strsplit(input$featureGenes, " "))
+    selected <- unique(unlist(strsplit(input$featureGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name, ens_id),
                        selected[!selected %in% c(com_name, ens_id)],"")
@@ -282,7 +282,7 @@ server <- function(input, output) {
   # ======== Violin Plot ======== #
   VlnPlotF <- reactive({
     seurat_obj <- SelectDataset()
-    selected <- unlist(strsplit(input$vlnGenes, " "))
+    selected <- unique(unlist(strsplit(input$vlnGenes, " ")))
     
     ifelse(selected %in% com_name,
            selected <- selected[selected %in% com_name],
@@ -307,7 +307,8 @@ server <- function(input, output) {
                  group.by = input$selectGrpVln, cols = clrs)
     
     for(k in 1:length(g)) {
-      g[[k]] <- g[[k]] + theme(legend.position = "none")
+      g[[k]] <- g[[k]] + theme(legend.position = "none",
+                               axis.text.x = element_text(angle = 90, hjust = 1))
     #}
     
     pg <- plot_grid(plotlist = g, ncol = 1) +
@@ -342,7 +343,7 @@ server <- function(input, output) {
   })
   
   mismatchVln <- function() {
-    selected <- unlist(strsplit(input$vlnGenes, " "))
+    selected <- unique(unlist(strsplit(input$vlnGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name,ens_id),
                        selected[!selected %in% c(com_name,ens_id)],"")
@@ -376,13 +377,13 @@ server <- function(input, output) {
   
   output$plot.uiVlnPlotF <- renderUI({input$runVlnPlot
     isolate({h <- getHeightVln(); plotOutput("myVlnPlotF",
-                                             width = "800px", height = h)})
+                                             width = "950px", height = h)})
   })
   
   output$downloadVlnPlot <- downloadHandler(
     filename = "Violin_plot.pdf", content = function(file) {
       pdf(file, onefile = FALSE,
-          width = 12,
+          width = 14,
           height = 10 * getLenInput(input$vlnGenes))
       print(VlnPlotF())
       dev.off()
@@ -393,7 +394,7 @@ server <- function(input, output) {
   # 
   StkdVlnPlotF <- reactive({
     seurat_obj <- SelectDataset()
-    selected <- unlist(strsplit(input$vlnStkdGenes, " "))
+    selected <- unique(unlist(strsplit(input$vlnStkdGenes, " ")))
     
     ifelse(selected %in% com_name,
            selected <- selected[selected %in% com_name],
@@ -498,7 +499,7 @@ server <- function(input, output) {
   })
   
   mismatchStkdVln <- function() {
-    selected <- unlist(strsplit(input$vlnStkdGenes, " "))
+    selected <- unique(unlist(strsplit(input$vlnStkdGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name,ens_id),
                        selected[!selected %in% c(com_name,ens_id)],"")
@@ -537,9 +538,9 @@ server <- function(input, output) {
   
   output$downloadStkdVlnPlot <- downloadHandler(
     filename = "StkdViolin_plot.pdf", content = function(file) {
-      png(file,
-          width = 800,
-          height = getHeightStkdVln() ,units = "px" )#* getLenInput(input$vlnStkdGenes))
+      pdf(file,
+          width = 12,
+          height = 12* getLenInput(input$vlnStkdGenes))#* getLenInput(input$vlnStkdGenes))
       print(StkdVlnPlotF())
       dev.off()
     }
@@ -549,7 +550,7 @@ server <- function(input, output) {
   # 
   GStkdVlnPlotF <- reactive({
     seurat_obj <- SelectDataset()
-    selected <- unlist(strsplit(input$vlnGStkdGenes, " "))
+    selected <- unique(unlist(strsplit(input$vlnGStkdGenes, " ")))
     
     ifelse(selected %in% com_name,
            selected <- selected[selected %in% com_name],
@@ -630,7 +631,7 @@ server <- function(input, output) {
   })
   
   mismatchGStkdVln <- function() {
-    selected <- unlist(strsplit(input$vlnGStkdGenes, " "))
+    selected <- unique(unlist(strsplit(input$vlnGStkdGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name,ens_id),
                        selected[!selected %in% c(com_name,ens_id)],"")
@@ -654,7 +655,7 @@ server <- function(input, output) {
   
   getHeightGStkdVln <- function() {
     l <- getLenInput(input$vlnGStkdGenes)
-    if (l == 1) {h <- "800"
+    if (l == 1) {h <- as.numeric(800)
     } else {
       h <- as.numeric(ceiling(l) * 175)
       #h <- paste0(h, "px")
@@ -664,14 +665,14 @@ server <- function(input, output) {
   
   output$plot.uiGStkdVlnPlotF <- renderUI({input$runGStkdVlnPlot
     isolate({h <- getHeightGStkdVln(); plotOutput("myGStkdVlnPlotF",
-                                                 width = "800px", height = paste0(h, "px"))})
+                                                 width = "950px", height = paste0(h, "px"))})
   })
   
   output$downloadGStkdVlnPlot <- downloadHandler(
     filename = "GStkdViolin_plot.pdf", content = function(file) {
-      png(file,
-          width = 800,
-          height = getHeightGStkdVln() ,units = "px" )#* getLenInput(input$vlnStkdGenes))
+      pdf(file,
+          width = 14,
+          height = 3 * getLenInput(input$vlnGStkdGenes))#* getLenInput(input$vlnStkdGenes))
       print(GStkdVlnPlotF())
       dev.off()
     }
@@ -767,7 +768,7 @@ server <- function(input, output) {
     clustering <- input$dPlotClust
     if (clustering == TRUE) {
       seurat_obj <- SelectDataset()
-      selected <- unlist(strsplit(input$dotGenes, " "))
+      selected <- unique(unlist(strsplit(input$dotGenes, " ")))
       
       ifelse(selected %in% com_name,
              selected <- selected[selected %in% com_name],
@@ -818,7 +819,7 @@ server <- function(input, output) {
       
     } else{
       seurat_obj <- SelectDataset()
-      selected <- unlist(strsplit(input$dotGenes, " "))
+      selected <- unique(unlist(strsplit(input$dotGenes, " ")))
       
       ifelse(selected %in% com_name,
              selected <- selected[selected %in% com_name],
@@ -870,7 +871,7 @@ server <- function(input, output) {
   })
   
   mismatchDot <- function() {
-    selected <- unlist(strsplit(input$dotGenes, " "))
+    selected <- unique(unlist(strsplit(input$dotGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name,ens_id),
                        selected[!selected %in% c(com_name,ens_id)],"")
@@ -891,23 +892,23 @@ server <- function(input, output) {
     })
   })
   
-  getHeightDot <- function() {
-    l <- getLenInput(input$dotGenes)
-    h <- paste0(as.character(l * 35), "in")
-    return(h)
-  }
-  
-  # ! check/change for project
-  # TODO create formula for n clusters/treats and dplot width
-  dplotWidth <- function () {
-    if(input$selectGrpDot == "cell.type.ident.by.data.set") {
-      w <- "2400px"
-    } else {
-      w <- "800px"
-    }
-    return(w)
-  }
-  
+  # getHeightDot <- function() {
+  #   l <- getLenInput(input$dotGenes)
+  #   h <- paste0(as.character(l * 35), "in")
+  #   return(h)
+  # }
+  # 
+  # # ! check/change for project
+  # # TODO create formula for n clusters/treats and dplot width
+  # dplotWidth <- function () {
+  #   if(input$selectGrpDot == "cell.type.ident.by.data.set") {
+  #     w <- "2400px"
+  #   } else {
+  #     w <- "800px"
+  #   }
+  #   return(w)
+  # }
+  # 
   # output$plot.uiDotPlotF <- renderUI({input$runDotPlot
   #   isolate({h <- getHeightDot(); plotOutput("myDotPlotF",
   #                                            width = dplotWidth(), height = h)
@@ -916,16 +917,22 @@ server <- function(input, output) {
   
   
   
-  dotHeight <- function() {
-    l <- getLenInput(input$dotGenes)
-    l <- as.numeric(l)
-    return(l)
-  }
-  
+  # dotHeight <- function() {
+  #   l <- getLenInput(input$dotGenes)
+  #   l <- as.numeric(l)
+  #   return(l)
+  # }
+  # 
+  # output$plot.uiDotPlotF <- renderUI({input$runDotPlot
+  #   isolate({h <- getHeightDot(); plotOutput("myDotPlotF",
+  #                                            width = paste0(input$manAdjustDotW, "in"),
+  #                                            height = paste0(input$manAdjustDotH, "in"))})
+  # })
+  # 
   output$plot.uiDotPlotF <- renderUI({input$runDotPlot
-    isolate({h <- getHeightDot(); plotOutput("myDotPlotF",
-                                             width = paste0(input$manAdjustDotW, "in"),
-                                             height = paste0(input$manAdjustDotH, "in"))})
+    isolate({plotOutput("myDotPlotF",
+             width = paste0(input$manAdjustDotW, "in"),
+             height = paste0(input$manAdjustDotH, "in"))})
   })
   
   output$downloadDotPlot <- downloadHandler(
@@ -1033,7 +1040,7 @@ server <- function(input, output) {
     clustering <- input$pHmapClust  #enable row clustering
     if (clustering == TRUE){
       seurat_obj <- SelectDataset()
-      selected <- unlist(strsplit(input$PhmapGenes, " "))
+      selected <- unique(unlist(strsplit(input$PhmapGenes, " ")))
       
       ifelse(selected %in% com_name,
              selected <- selected[selected %in% com_name],
@@ -1100,7 +1107,7 @@ server <- function(input, output) {
       
     } else {
       seurat_obj <- SelectDataset()
-      selected <- unlist(strsplit(input$PhmapGenes, " "))
+      selected <- unique(unlist(strsplit(input$PhmapGenes, " ")))
       
       ifelse(selected %in% com_name,
              selected <- selected[selected %in% com_name],
@@ -1178,7 +1185,7 @@ server <- function(input, output) {
   })
   
   mismatchPhmap <- function() {
-    selected <- unlist(strsplit(input$PhmapGenes, " "))
+    selected <- unique(unlist(strsplit(input$PhmapGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name, ens_id),
                        selected[!selected %in% c(com_name, ens_id)],"")
@@ -1201,40 +1208,39 @@ server <- function(input, output) {
     })
   })
   
-  getHeightPhmap <- reactive({
-    l <- getLenInput(input$PhmapGenes)
-    h <- as.numeric(l * 35)
-    return(h)
-  })
-  
-  getWidthPhmap <- function() {
-    if(input$selectGrpHmap == "cell.type.ident.by.data.set") {
-      w <- "1200"
-    } else {
-      w <- "800"
-    }
-    return(w)
-  }
-  
-  # output$plot.uiPheatmapF <- renderUI({input$runPhmap
-  #   isolate({
-  #     w <- paste0(getWidthPhmap()); h <- paste0(getHeightPhmap())
-  #     plotOutput("myPhmapF", width = paste0(w, "px"), height = paste0(h, "px"))
-  #   })
+  # getHeightPhmap <- reactive({
+  #   l <- getLenInput(input$PhmapGenes)
+  #   h <- as.numeric(l * 35)
+  #   return(h)
   # })
   # 
-  output$plot.uiPheatmapF <- renderUI({input$runPhmap
-    isolate({h <- getHeightPhmap(); plotOutput("myPhmapF",
-                                               width = paste0(input$manAdjustHmapW, "in"),
-                                               height = paste0(input$manAdjustHmapH, "in"))})
-  })
+  # getWidthPhmap <- function() {
+  #   if(input$selectGrpHmap == "cell.type.ident.by.data.set") {
+  #     w <- "1200"
+  #   } else {
+  #     w <- "800"
+  #   }
+  #   return(w)
+  # }
   
+# 
+#   output$plot.uiPheatmapF <- renderUI({input$runPhmap
+#     isolate({h <- getHeightPhmap(); plotOutput("myPhmapF",
+#                                                width = paste0(input$manAdjustHmapW, "in"),
+#                                                height = paste0(input$manAdjustHmapH, "in"))})
+#   })
+  
+  output$plot.uiPheatmapF <- renderUI({input$runPhmap
+    isolate({plotOutput("myPhmapF",
+             width = paste0(input$manAdjustHmapW, "in"),
+             height = paste0(input$manAdjustHmapH, "in"))})
+  })
+
   #download
   output$downloadhmap <- downloadHandler(
     filename = "heatmap.png", content = function(file) {
       png(file, height = as.numeric(input$manAdjustHmapH),
-          width = as.numeric(input$manAdjustHmapW), units = "in", 
-          res = 300)
+          width = as.numeric(input$manAdjustHmapW), units = "in", res = 300)
       print(pHeatmapF())
       dev.off()
     }
@@ -1245,7 +1251,7 @@ server <- function(input, output) {
     clustering <- input$IndvpHmapClust  #enable row clustering
     if (clustering == TRUE){
       seurat_obj <- SelectDataset()
-      selected <- unlist(strsplit(input$IndvPhmapGenes, " "))
+      selected <- unique(unlist(strsplit(input$IndvPhmapGenes, " ")))
       
       ifelse(selected %in% com_name,
              selected <- selected[selected %in% com_name],
@@ -1374,7 +1380,7 @@ server <- function(input, output) {
       
     } else {
       seurat_obj <- SelectDataset()
-      selected <- unlist(strsplit(input$IndvPhmapGenes, " "))
+      selected <- unique(unlist(strsplit(input$IndvPhmapGenes, " ")))
       
       ifelse(selected %in% com_name,
              selected <- selected[selected %in% com_name],
@@ -1525,7 +1531,7 @@ server <- function(input, output) {
   
   
   mismatchIndvPhmap <- function() {
-    selected <- unlist(strsplit(input$IndvPhmapGenes, " "))
+    selected <- unique(unlist(strsplit(input$IndvPhmapGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name, ens_id),
                        selected[!selected %in% c(com_name, ens_id)],"")
@@ -1548,32 +1554,31 @@ server <- function(input, output) {
     })
   })
   
-  getHeightIndvPhmap <- reactive({
-    l <- getLenInput(input$IndvPhmapGenes)
-    h <- as.numeric(l * 35)
-    return(h)
-  })
-  
-  getWidthIndvPhmap <- function() {
-    if(input$selectGrpIndvHmap == "cell.type.ident.by.data.set") {
-      w <- "1600"
-    } else {
-      w <- "800"
-    }
-    return(w)
-  }
+  # getHeightIndvPhmap <- reactive({
+  #   l <- getLenInput(input$IndvPhmapGenes)
+  #   h <- as.numeric(l * 35)
+  #   return(h)
+  # })
+  # 
+  # getWidthIndvPhmap <- function() {
+  #   if(input$selectGrpIndvHmap == "cell.type.ident.by.data.set") {
+  #     w <- "1600"
+  #   } else {
+  #     w <- "800"
+  #   }
+  #   return(w)
+  # }
   
   # output$plot.uiIndvpHeatmapF <- renderUI({input$runIndvPhmap
-  #   isolate({
-  #     w <- paste0(getWidthIndvPhmap()); h <- paste0(getHeightIndvPhmap())
-  #     plotOutput("myIndvPhmapF", width = paste0(w, "px"), height = paste0(h, "px"))
-  #   })
+  #   isolate({h <- getHeightIndvPhmap(); plotOutput("myIndvPhmapF",
+  #                                                  width = paste0(input$manAdjustIndvHmapW, "in"),
+  #                                                  height = paste0(input$manAdjustIndvHmapH, "in"))})
   # })
   
   output$plot.uiIndvpHeatmapF <- renderUI({input$runIndvPhmap
-    isolate({h <- getHeightIndvPhmap(); plotOutput("myIndvPhmapF",
-                                                   width = paste0(input$manAdjustIndvHmapW, "in"),
-                                                   height = paste0(input$manAdjustIndvHmapH, "in"))})
+    isolate({plotOutput("myIndvPhmapF",
+             width = paste0(input$manAdjustIndvHmapW, "in"),
+             height = paste0(input$manAdjustIndvHmapH, "in"))})
   })
   
   #download
