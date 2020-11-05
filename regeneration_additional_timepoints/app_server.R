@@ -201,6 +201,9 @@ server <- function(input, output) {
                   selected <- gene_df[ens_id %in% selected, 3],"")
     )
     
+    #remove not found in scaled matrix obj
+    selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
+    
     cells_to_plt <- rownames(seurat_obj@meta.data[
       seurat_obj@meta.data$data.set %in% input$cellIdentsFeat,])
     
@@ -234,10 +237,13 @@ server <- function(input, output) {
   })
   
   mismatchFeat <- function() {
+    seurat_obj <- SelectDataset()
+    
     selected <- unique(unlist(strsplit(input$featureGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name, ens_id),
-                       selected[!selected %in% c(com_name, ens_id)],"")
+                       selected[!selected %in% c(com_name, ens_id,
+                       rownames(seurat_obj[["RNA"]]@data))],"")
     return(mismatch)
   }
   
@@ -291,6 +297,9 @@ server <- function(input, output) {
                   selected <- gene_df[ens_id %in% selected, 3],"")
     )
     
+    #remove not found in scaled matrix obj
+    selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
+    
     seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsVln]
     
     if(input$selectGrpVln == "data.set") {
@@ -343,10 +352,13 @@ server <- function(input, output) {
   })
   
   mismatchVln <- function() {
+    seurat_obj <- SelectDataset()
+    
     selected <- unique(unlist(strsplit(input$vlnGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name,ens_id),
-                       selected[!selected %in% c(com_name,ens_id)],"")
+                       selected[!selected %in% c(com_name,ens_id,
+                       rownames(seurat_obj[["RNA"]]@data))],"")
     return(mismatch)
   }
   
@@ -402,6 +414,9 @@ server <- function(input, output) {
            ifelse(selected %in% ens_id,
                   selected <- gene_df[ens_id %in% selected, 3],"")
     )
+    
+    #remove not found in scaled matrix obj
+    selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
     
     seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsStkdVln]
     
@@ -499,10 +514,13 @@ server <- function(input, output) {
   })
   
   mismatchStkdVln <- function() {
+    seurat_obj <- SelectDataset()
+    
     selected <- unique(unlist(strsplit(input$vlnStkdGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name,ens_id),
-                       selected[!selected %in% c(com_name,ens_id)],"")
+                       selected[!selected %in% c(com_name,ens_id,
+                       rownames(seurat_obj[["RNA"]]@data))],"")
     return(mismatch)
   }
   
@@ -558,6 +576,9 @@ server <- function(input, output) {
            ifelse(selected %in% ens_id,
                   selected <- gene_df[ens_id %in% selected, 3],"")
     )
+    
+    #remove not found in scaled matrix obj
+    selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
     
     seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsGStkdVln]
     
@@ -631,10 +652,13 @@ server <- function(input, output) {
   })
   
   mismatchGStkdVln <- function() {
+    seurat_obj <- SelectDataset()
+    
     selected <- unique(unlist(strsplit(input$vlnGStkdGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name,ens_id),
-                       selected[!selected %in% c(com_name,ens_id)],"")
+                       selected[!selected %in% c(com_name,ens_id,
+                       rownames(seurat_obj[["RNA"]]@data))],"")
     return(mismatch)
   }
   
@@ -777,6 +801,9 @@ server <- function(input, output) {
                     selected <- gene_df[ens_id %in% selected, 3],"")
       )
       
+      #remove not found in scaled matrix obj
+      selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
+      
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDot]
       
       group.by <- input$selectGrpDot
@@ -828,6 +855,9 @@ server <- function(input, output) {
                     selected <- gene_df[ens_id %in% selected, 3],"")
       )
       
+      #remove not found in scaled matrix obj
+      selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
+      
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDot]
       
       group.by <- input$selectGrpDot
@@ -871,10 +901,12 @@ server <- function(input, output) {
   })
   
   mismatchDot <- function() {
+    seurat_obj <- SelectDataset()
     selected <- unique(unlist(strsplit(input$dotGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name,ens_id),
-                       selected[!selected %in% c(com_name,ens_id)],"")
+                       selected[!selected %in% c(com_name,ens_id,
+                      rownames(seurat_obj[["RNA"]]@data))],"")
     return(mismatch)
   }
   
@@ -945,86 +977,87 @@ server <- function(input, output) {
   )
   
   
-  # ======== Differential Expression ======== #
-  diffExp <- reactive({
-    seurat_obj <- SelectDataset()
-    seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDiff]
-    meta <- seurat_obj@meta.data
-    
-    print(input$identText1)
-    print(input$identText1)
-    subset1 <- as.character(input$identText1)
-    subset2 <- as.character(input$identText2)
-    
-    if ("data.set" %in% colnames(meta)) {
-      group1 <- rownames(meta[meta$data.set %in% subset1,])
-      group2 <- rownames(meta[meta$data.set %in% subset2,])
-    } else {
-      group1 <- rownames(meta[meta$cell.type.ident %in% subset1,])
-      group2 <- rownames(meta[meta$cell.type.ident %in% subset2,])
-    }
-    
-    diff_results <- FindMarkers(test.use = input$statSelectDiff,
-                                seurat_obj, ident.1 = group1, ident.2 = group2)
-    
-    diff_results$Gene.name.uniq <- ""
-    diff_results$Gene.name.uniq <- rownames(diff_results)
-    
-    pval <- as.numeric(input$pValCutoff)
-    diff_results <- diff_results[
-      diff_results$p_val_adj < pval, c(6,1:5)]
-    diff_results <<- diff_results[
-      order(diff_results$avg_logFC, decreasing = TRUE),]
-  })
   
-  # Requires input$identText to execute before diffExp()
-  diffReact <- eventReactive(c(input$identText1, input$identText2), diffExp())
-  
-  output$diffTable <- renderTable({input$runDiffExp
-    isolate({withProgress(diffReact(), message = "Calculating..",
-                          min = 0, max = 10, value = 10)}
-    )}, digits = -5)
-  
-  output$diffOut1 <- renderUI({
-    pickerInput("identText1", tags$b("Group 1 - positive FC"),
-                choices = as.character(printTreats()), multiple = TRUE,
-                selected = as.character(printTreats())[1], options = list(
-                  `actions-box` = TRUE), width = "80%")
-  })
-  
-  output$diffOut2 <- renderUI({
-    pickerInput("identText2", tags$b("Group 2 - negative FC"),
-                choices = as.character(printTreats()), multiple = TRUE,
-                selected = as.character(printTreats())[2],options = list(
-                  `actions-box` = TRUE), width = "80%")
-  })
-  
-  output$cellSelectDiff <- renderUI({ # New cell type select
-    pickerInput("cellIdentsDiff", "Add or remove clusters:",
-                choices = as.character(printIdents()), multiple = TRUE,
-                selected = as.character(printIdents()), options = list(
-                  `actions-box` = TRUE), width = "80%")
-  })
-  
-  output$SelectedDataDiff <- renderText({input$runDiffExp
-    isolate({input$Analysis})
-  })
-  
-  makeDiffTable <- function() {
-    markerTable <<- inner_join(diff_results,
-                               gene_df, by = "Gene.name.uniq")
-    return(markerTable)
-  }
-  
-  # qmethod "double" rids the table of escape backslashes
-  output$downloadDiffExp <- downloadHandler(
-    filename = "diff_exp_results.tsv",
-    content = function(file) {
-      write.table(makeDiffTable(), file,
-                  row.names = FALSE, col.names = TRUE,
-                  qmethod = "double", sep = "\t")
-    }
-  )
+  # # ======== Differential Expression ======== #
+  # diffExp <- reactive({
+  #   seurat_obj <- SelectDataset()
+  #   seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDiff]
+  #   meta <- seurat_obj@meta.data
+  #   
+  #   print(input$identText1)
+  #   print(input$identText1)
+  #   subset1 <- as.character(input$identText1)
+  #   subset2 <- as.character(input$identText2)
+  #   
+  #   if ("data.set" %in% colnames(meta)) {
+  #     group1 <- rownames(meta[meta$data.set %in% subset1,])
+  #     group2 <- rownames(meta[meta$data.set %in% subset2,])
+  #   } else {
+  #     group1 <- rownames(meta[meta$cell.type.ident %in% subset1,])
+  #     group2 <- rownames(meta[meta$cell.type.ident %in% subset2,])
+  #   }
+  #   
+  #   diff_results <- FindMarkers(test.use = input$statSelectDiff,
+  #                               seurat_obj, ident.1 = group1, ident.2 = group2)
+  #   
+  #   diff_results$Gene.name.uniq <- ""
+  #   diff_results$Gene.name.uniq <- rownames(diff_results)
+  #   
+  #   pval <- as.numeric(input$pValCutoff)
+  #   diff_results <- diff_results[
+  #     diff_results$p_val_adj < pval, c(6,1:5)]
+  #   diff_results <<- diff_results[
+  #     order(diff_results$avg_logFC, decreasing = TRUE),]
+  # })
+  # 
+  # # Requires input$identText to execute before diffExp()
+  # diffReact <- eventReactive(c(input$identText1, input$identText2), diffExp())
+  # 
+  # output$diffTable <- renderTable({input$runDiffExp
+  #   isolate({withProgress(diffReact(), message = "Calculating..",
+  #                         min = 0, max = 10, value = 10)}
+  #   )}, digits = -5)
+  # 
+  # output$diffOut1 <- renderUI({
+  #   pickerInput("identText1", tags$b("Group 1 - positive FC"),
+  #               choices = as.character(printTreats()), multiple = TRUE,
+  #               selected = as.character(printTreats())[1], options = list(
+  #                 `actions-box` = TRUE), width = "80%")
+  # })
+  # 
+  # output$diffOut2 <- renderUI({
+  #   pickerInput("identText2", tags$b("Group 2 - negative FC"),
+  #               choices = as.character(printTreats()), multiple = TRUE,
+  #               selected = as.character(printTreats())[2],options = list(
+  #                 `actions-box` = TRUE), width = "80%")
+  # })
+  # 
+  # output$cellSelectDiff <- renderUI({ # New cell type select
+  #   pickerInput("cellIdentsDiff", "Add or remove clusters:",
+  #               choices = as.character(printIdents()), multiple = TRUE,
+  #               selected = as.character(printIdents()), options = list(
+  #                 `actions-box` = TRUE), width = "80%")
+  # })
+  # 
+  # output$SelectedDataDiff <- renderText({input$runDiffExp
+  #   isolate({input$Analysis})
+  # })
+  # 
+  # makeDiffTable <- function() {
+  #   markerTable <<- inner_join(diff_results,
+  #                              gene_df, by = "Gene.name.uniq")
+  #   return(markerTable)
+  # }
+  # 
+  # # qmethod "double" rids the table of escape backslashes
+  # output$downloadDiffExp <- downloadHandler(
+  #   filename = "diff_exp_results.tsv",
+  #   content = function(file) {
+  #     write.table(makeDiffTable(), file,
+  #                 row.names = FALSE, col.names = TRUE,
+  #                 qmethod = "double", sep = "\t")
+  #   }
+  # )
   
   
   # ======== Download meta data ======== #
@@ -1048,6 +1081,9 @@ server <- function(input, output) {
              ifelse(selected %in% ens_id,
                     selected <- gene_df[ens_id %in% selected, 3],"")
       )
+      
+      #remove not found in scaled matrix obj
+      selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
       
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsHmap]
       
@@ -1115,6 +1151,9 @@ server <- function(input, output) {
              ifelse(selected %in% ens_id,
                     selected <- gene_df[ens_id %in% selected, 3],"")
       )
+      
+      #remove not found in scaled matrix obj
+      selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
       
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsHmap]
       print(input$cellIdentsHmap)
@@ -1185,10 +1224,13 @@ server <- function(input, output) {
   })
   
   mismatchPhmap <- function() {
+    seurat_obj <- SelectDataset()
+    
     selected <- unique(unlist(strsplit(input$PhmapGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name, ens_id),
-                       selected[!selected %in% c(com_name, ens_id)],"")
+                       selected[!selected %in% c(com_name, ens_id,
+                        rownames(seurat_obj[["RNA"]]@data))],"")
     return(mismatch)
   }
   
@@ -1259,6 +1301,9 @@ server <- function(input, output) {
              ifelse(selected %in% ens_id,
                     selected <- gene_df[ens_id %in% selected, 3],"")
       )
+      
+      #remove not found in scaled matrix obj
+      selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
       
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsIndvHmap]
       
@@ -1388,6 +1433,8 @@ server <- function(input, output) {
              ifelse(selected %in% ens_id,
                     selected <- gene_df[ens_id %in% selected, 3],"")
       )
+      #remove not found in scaled matrix obj
+      selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
       
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsIndvHmap]
       print(input$cellIdentsIndvHmap)
@@ -1531,10 +1578,13 @@ server <- function(input, output) {
   
   
   mismatchIndvPhmap <- function() {
+    seurat_obj <- SelectDataset()
+    
     selected <- unique(unlist(strsplit(input$IndvPhmapGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name, ens_id),
-                       selected[!selected %in% c(com_name, ens_id)],"")
+                       selected[!selected %in% c(com_name, ens_id,
+                       rownames(seurat_obj[["RNA"]]@data))],"")
     return(mismatch)
   }
   
@@ -1585,7 +1635,7 @@ server <- function(input, output) {
   output$downloadIndvhmap <- downloadHandler(
     filename = "IndvHeatmap.png", content = function(file) {
       png(file, height = as.numeric(input$manAdjustIndvHmapH),
-          width = as.numeric(input$manAdjustIndvHmapW), units = "in", res = 300)
+          width = as.numeric(input$manAdjustIndvHmapW), units = "in", res = 100)
       print(IndvpHeatmapF())
       dev.off()
     }

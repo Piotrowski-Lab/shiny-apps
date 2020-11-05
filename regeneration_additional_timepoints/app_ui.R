@@ -486,7 +486,18 @@ tabPanel("Stacked Violin Plots by Gene", #fluid = FALSE,
 							width = "100%"))
 				      ),
 				fluidRow(tags$br()),
-				column(12, uiOutput("plot.uiDotPlotF"))
+				column(12, uiOutput("plot.uiDotPlotF")),
+        fluidRow(tags$script("$(document).on('shiny:connected', function(event) {
+var myWidth = $(window).width();
+Shiny.onInputChange('shiny_width',myWidth)
+
+});"),
+
+tags$script("$(document).on('shiny:connected', function(event) {
+var myHeight = $(window).height();
+Shiny.onInputChange('shiny_height',myHeight)
+
+});"))
 				)
 			)
 			)
@@ -532,18 +543,7 @@ tabPanel("Stacked Violin Plots by Gene", #fluid = FALSE,
 							fluidRow(tags$br()),
 							column(12, uiOutput("plot.uiDatFeatPlotV7"), align = "center"),
 							fluidRow(tags$br()),
-							fluidRow(tags$br()),
-							fluidRow( tags$script("$(document).on('shiny:connected', function(event) {
-var myWidth = $(window).width();
-Shiny.onInputChange('shiny_width',myWidth)
-
-});"),
-							          
-							          tags$script("$(document).on('shiny:connected', function(event) {
-var myHeight = $(window).height();
-Shiny.onInputChange('shiny_height',myHeight)
-
-});"))
+							fluidRow(tags$br())
 	),
 
 	mainPanel(

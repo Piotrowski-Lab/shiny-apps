@@ -60,7 +60,7 @@ server <- function(input, output) {
   # ======== Gene Database ======== #
   GeneDB <- function() {
     seurat_obj <- SelectDataset()
-    selected <- unlist(strsplit(input$dbGenes, " "))
+    selected <- unique(unlist(strsplit(input$dbGenes, " ")))
     
     present <- gene_df$Gene.name.uniq %in% rownames(seurat_obj)
     gene_df <- cbind(in_dataset = present, gene_df)
@@ -129,12 +129,12 @@ server <- function(input, output) {
   DatFeatPlotF <- function() {
     
     seurat_obj <- SelectDataset()
-    
-    if(input$Analysis %in% multiple_idents_seurObj){
+
+    if (input$Analysis == "neuromast cells" | input$Analysis == "all she-pos. cells") {
       umap_clusters <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                                label = TRUE, label.size = 0, group.by = "cell.type.ident",
                                cols = cluster_clrs)
-    }else {
+    } else {
       umap_clusters <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                                label = TRUE, label.size = 0, group.by = "seurat_clusters")
     }
@@ -144,7 +144,7 @@ server <- function(input, output) {
             axis.line.x = element_blank(), axis.text.y = element_blank(),
             axis.ticks.y = element_blank(), axis.line.y = element_blank(),
             axis.title = element_text(size = 12), legend.position="bottom", legend.justification = "center") +
-      guides(col = guide_legend(ncol = 4,override.aes = list(size=3))) 
+            guides(col = guide_legend(ncol = 4,override.aes = list(size=3))) 
     
     umap_dataset <- DimPlot(seurat_obj, reduction = "umap", pt.size = 0.10,
                             label = TRUE, label.size = 0, group.by = "data.set", cols = trt_colors)
@@ -171,7 +171,7 @@ server <- function(input, output) {
     plotOutput("myDatFeatPlotH1", width = "925px", height = "525px")
   })
   
-  n_panels <- 1:8
+  n_panels <- 1:9
   
   lapply(n_panels, function(i) {
     output[[paste0("myDatFeatPlotV", i)]] <- 
@@ -188,7 +188,7 @@ server <- function(input, output) {
   # ======== Feature Plot ======== #
   FeaturePlotF <- reactive({
     seurat_obj <- SelectDataset()
-    selected <- unlist(strsplit(input$featureGenes, " "))
+    selected <- unique(unlist(strsplit(input$featureGenes, " ")))
     
     ifelse(selected %in% com_name,
            selected <- selected[selected %in% com_name],
@@ -196,6 +196,9 @@ server <- function(input, output) {
            ifelse(selected %in% ens_id,
                   selected <- gene_df[ens_id %in% selected, 3],"")
     )
+    
+    #remove not found in scaled matrix obj
+    selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
     
     cells_to_plt <- rownames(seurat_obj@meta.data[
       seurat_obj@meta.data$data.set %in% input$cellIdentsFeat,])
@@ -230,10 +233,13 @@ server <- function(input, output) {
   })
   
   mismatchFeat <- function() {
-    selected <- unlist(strsplit(input$featureGenes, " "))
+    seurat_obj <- SelectDataset()
+    
+    selected <- unique(unlist(strsplit(input$featureGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name, ens_id),
-                       selected[!selected %in% c(com_name, ens_id)],"")
+                       selected[!selected %in% c(com_name, ens_id,
+                       rownames(seurat_obj[["RNA"]]@data))],"")
     return(mismatch)
   }
   
@@ -278,7 +284,7 @@ server <- function(input, output) {
   # ======== Violin Plot ======== #
   VlnPlotF <- reactive({
     seurat_obj <- SelectDataset()
-    selected <- unlist(strsplit(input$vlnGenes, " "))
+    selected <- unique(unlist(strsplit(input$vlnGenes, " ")))
     
     ifelse(selected %in% com_name,
            selected <- selected[selected %in% com_name],
@@ -286,6 +292,9 @@ server <- function(input, output) {
            ifelse(selected %in% ens_id,
                   selected <- gene_df[ens_id %in% selected, 3],"")
     )
+    
+    #remove not found in scaled matrix obj
+    selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
     
     seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsVln]
     
@@ -297,35 +306,39 @@ server <- function(input, output) {
       clrs <- cluster_clrs
     }
     
+    #if (input$Analysis == "neuromast cells" | input$Analysis == "ptime-regen" | input$Analysis == "ptime-regen"){
     g <- VlnPlot(seurat_obj, selected,
                  pt.size = input$ptSizeVln, combine = FALSE,
                  group.by = input$selectGrpVln, cols = clrs)
     
     for(k in 1:length(g)) {
-      g[[k]] <- g[[k]] + theme(legend.position = "none")
-      #}
-      
+      g[[k]] <- g[[k]] + theme(legend.position = "none",
+                               axis.text.x = element_text(angle = 90, hjust = 1))
+    #}
+    
+    pg <- plot_grid(plotlist = g, ncol = 1) +
+      labs(title = paste("Selected analysis:",
+                         as.character(input$Analysis)), subtitle = "", caption = "") +
+      theme(plot.title = element_text(face = "bold", size = 15, hjust = 0))
+
+    }
+    if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpVln == "cell.type.ident"){
+
+            g <- VlnPlot(seurat_obj, selected,
+                   pt.size = input$ptSizeVln, combine = FALSE,
+                   group.by = "seurat_clusters", cols = clrs)
+
+      for(k in 1:length(g)) {
+        g[[k]] <- g[[k]] + theme(legend.position = "none")
+      }
+
       pg <- plot_grid(plotlist = g, ncol = 1) +
         labs(title = paste("Selected analysis:",
                            as.character(input$Analysis)), subtitle = "", caption = "") +
         theme(plot.title = element_text(face = "bold", size = 15, hjust = 0))
     }
-      if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpVln == "cell.type.ident"){
-        g <- VlnPlot(seurat_obj, selected,
-                     pt.size = input$ptSizeVln, combine = FALSE,
-                     group.by = "seurat_clusters", cols = clrs)
-        
-        for(k in 1:length(g)) {
-          g[[k]] <- g[[k]] + theme(legend.position = "none")
-        }
-        
-        pg <- plot_grid(plotlist = g, ncol = 1) +
-          labs(title = paste("Selected analysis:",
-                             as.character(input$Analysis)), subtitle = "", caption = "") +
-          theme(plot.title = element_text(face = "bold", size = 15, hjust = 0))
-      }
-      return(pg)
-    })
+    return(pg)
+  })
   
   output$cellSelectVln <- renderUI({ # New cell type select
     pickerInput("cellIdentsVln", "Add or remove clusters:",
@@ -335,10 +348,13 @@ server <- function(input, output) {
   })
   
   mismatchVln <- function() {
-    selected <- unlist(strsplit(input$vlnGenes, " "))
+    seurat_obj <- SelectDataset()
+    
+    selected <- unique(unlist(strsplit(input$vlnGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name,ens_id),
-                       selected[!selected %in% c(com_name,ens_id)],"")
+                       selected[!selected %in% c(com_name,ens_id,
+                       rownames(seurat_obj[["RNA"]]@data))],"")
     return(mismatch)
   }
   
@@ -369,19 +385,306 @@ server <- function(input, output) {
   
   output$plot.uiVlnPlotF <- renderUI({input$runVlnPlot
     isolate({h <- getHeightVln(); plotOutput("myVlnPlotF",
-                                             width = "800px", height = h)})
+                                             width = "950px", height = h)})
   })
   
   output$downloadVlnPlot <- downloadHandler(
     filename = "Violin_plot.pdf", content = function(file) {
       pdf(file, onefile = FALSE,
-          width = 12,
+          width = 14,
           height = 10 * getLenInput(input$vlnGenes))
       print(VlnPlotF())
       dev.off()
     }
   )
   
+  # # ======== Stacked Violin Plot ======== #
+  # 
+  StkdVlnPlotF <- reactive({
+    seurat_obj <- SelectDataset()
+    selected <- unique(unlist(strsplit(input$vlnStkdGenes, " ")))
+    
+    ifelse(selected %in% com_name,
+           selected <- selected[selected %in% com_name],
+           
+           ifelse(selected %in% ens_id,
+                  selected <- gene_df[ens_id %in% selected, 3],"")
+    )
+    
+    #remove not found in scaled matrix obj
+    selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
+    
+    seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsStkdVln]
+    
+    ids <- as.list(levels(seurat_obj$data.set))
+    
+    
+    gg_color_hue <- function(n) {
+      hues = seq(15, 375, length = n + 1)
+      hcl(h = hues, l = 65, c = 100)[1:n]
+    }
+    
+    ## extract the max value of the y axis
+    extract_max<- function(p){
+      ymax<- max(ggplot_build(p)$layout$panel_scales_y[[1]]$range$range)
+      return(ceiling(ymax))
+    }
+    
+    
+    obj_trt_list <- list()[1:length(ids)]
+    
+    for (i in 1:length(ids)) {
+      print(ids[[i]])
+      #seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsStkdVln]
+
+      obj_trt_list[[i]] <- seurat_obj[,seurat_obj[["data.set"]] == ids[[i]]]
+    }
+    
+    stacked_violin_plot <- function(goi, obj_trt_list){
+      trt_plot_list <- list()[1:length(ids)]
+      names(trt_plot_list) <- ids
+      for (i in 1:length(ids)) {
+        vln_obj <- VlnPlot(
+          obj_trt_list[[i]], features = goi, pt.size = 0.0) +
+          xlab("") + ylab(ids[i]) + ggtitle("") +
+          theme(legend.position = "none", axis.text.x = element_blank(),
+                axis.ticks.x = element_blank(),
+                axis.title.y = element_text(size = rel(1), angle = 0),
+                axis.text.y = element_text(size = rel(1)),
+                plot.margin = unit(c(-1.5, 0.5, -1.5, 0.5), "cm"))
+        
+        trt_plot_list[[i]] <- vln_obj
+      }
+      
+      trt_plot_list[[length(trt_plot_list)]]<- trt_plot_list[[length(trt_plot_list)]] +
+        theme(axis.text.x=element_text(angle = 90), axis.ticks.x = element_line())
+      # change the y-axis tick to only max value, treats ymax from each obj_trt_list independently
+      ymaxs <- purrr::map_dbl(trt_plot_list, extract_max)
+      #finds highest ymax, normalize
+      ymaxs<- max(sapply(ymaxs, max))
+      trt_plot_list <- purrr::map2(trt_plot_list, ymaxs, function(x, y) x +
+                                     scale_y_continuous(breaks = c(y)) + expand_limits(y = y))
+      grid_obj <- cowplot::plot_grid(plotlist = trt_plot_list,
+                                     nrow = length(ids), ncol = 1, axis = "l", align = "hv") + #rel_heights  = c(1,1,1,1,1,1)) +
+        theme(plot.margin = margin(unit(c(-0.75, 0, -0.75, 0), "cm"))) +
+        ggtitle(goi) + theme(plot.title = element_text(hjust = 0.5, face = "bold", margin = margin(.5, 0 ,.5,0,unit = "cm"))) 
+      
+      
+      return(grid_obj)
+      
+    }
+    grid_obj <- list()[1:length(selected)]
+    for (i in 1:length(selected)){
+      print(selected[[i]])
+      options(repr.plot.width = 12, repr.plot.height = 3)
+      
+      grid_obj[[i]] <- stacked_violin_plot(goi = selected[[i]], obj_trt_list = obj_trt_list)
+      
+    }
+    names(grid_obj) <- selected
+    
+    final_grid <- cowplot::plot_grid(plotlist = grid_obj, nrow = length(grid_obj), axis = "l", align = "hv", scale = 0.9) +
+      theme(plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"))
+    
+    return(final_grid)
+    
+  })
+  
+  output$cellSelectStkdVln <- renderUI({ # New cell type select
+    pickerInput("cellIdentsStkdVln", "Add or remove clusters:",
+                choices = as.character(printIdents()), multiple = TRUE,
+                selected = as.character(printIdents()), options = list(
+                  `actions-box` = TRUE), width = "85%")
+  })
+  
+  mismatchStkdVln <- function() {
+    seurat_obj <- SelectDataset()
+    
+    selected <- unique(unlist(strsplit(input$vlnStkdGenes, " ")))
+    
+    mismatch <- ifelse(!selected %in% c(com_name,ens_id),
+                       selected[!selected %in% c(com_name,ens_id,
+                       rownames(seurat_obj[["RNA"]]@data))],"")
+    return(mismatch)
+  }
+  
+  output$notInStkdVln <- renderText({input$runStkdVlnPlot
+    isolate({mismatchStkdVln()})
+  })
+  
+  output$SelectedDataStkdVln <- renderText({input$runStkdVlnPlot
+    isolate({input$Analysis})
+  })
+  
+  output$myStkdVlnPlotF <- renderPlot({input$runStkdVlnPlot
+    isolate({withProgress({p <- StkdVlnPlotF(); print(p)},
+                          message = "Rendering plot..",
+                          min = 0, max = 10, value = 10)
+    })
+  })
+  
+  getHeightStkdVln <- function() {
+    l <- getLenInput(input$vlnStkdGenes)
+    if (l == 1) {h <- "800"
+    } else {
+      h <- as.numeric(ceiling(l) * 675)
+      #h <- paste0(h, "px")
+    }
+    return(h)
+  }
+  
+  output$plot.uiStkdVlnPlotF <- renderUI({input$runStkdVlnPlot
+    isolate({h <- getHeightStkdVln(); plotOutput("myStkdVlnPlotF",
+                                                 width = "800px", height = paste0(h, "px"))})
+  })
+  
+  output$downloadStkdVlnPlot <- downloadHandler(
+    filename = "StkdViolin_plot.pdf", content = function(file) {
+      pdf(file,
+          width = 12,
+          height = 12* getLenInput(input$vlnStkdGenes))#* getLenInput(input$vlnStkdGenes))
+      print(StkdVlnPlotF())
+      dev.off()
+    }
+  )
+  
+  # # ======== Gene Stacked Violin Plot ======== #
+  # 
+  GStkdVlnPlotF <- reactive({
+    seurat_obj <- SelectDataset()
+    selected <- unique(unlist(strsplit(input$vlnGStkdGenes, " ")))
+    
+    ifelse(selected %in% com_name,
+           selected <- selected[selected %in% com_name],
+           
+           ifelse(selected %in% ens_id,
+                  selected <- gene_df[ens_id %in% selected, 3],"")
+    )
+    
+    #remove not found in scaled matrix obj
+    selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
+    
+    seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsGStkdVln]
+    
+    group.by <- input$selectGrpGStkdVln
+    
+    if(input$Analysis %notin% multiple_idents_seurObj && input$selectGrpGStkdVln == "cell.type.ident"){
+      group.by <- "seurat_clusters"
+    }
+    
+    p_size <- as.numeric(input$ptSizeGStkdVln)
+    
+    modify_vlnplot<- function(obj, 
+                              feature, 
+                              pt.size = p_size, 
+                              plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),
+                              grouped = group.by) {
+      p<- VlnPlot(obj, features = feature, pt.size = pt.size, group.by = grouped )  + 
+        xlab("") + ylab(feature) + ggtitle("") + 
+        theme(legend.position = "none", 
+              axis.text.x = element_blank(), 
+              axis.ticks.x = element_blank(), 
+              axis.title.y = element_text(size = rel(1), angle = 0), 
+              axis.text.y = element_text(size = rel(1)), 
+              plot.margin = plot.margin ) 
+      return(p)
+    }
+    
+    ## extract the max value of the y axis
+    extract_max<- function(p){
+      ymax<- max(ggplot_build(p)$layout$panel_scales_y[[1]]$range$range)
+      return(ceiling(ymax))
+    }
+    
+    
+    ## main function
+    StackedVlnPlot<- function(obj, features,
+                              pt.size = 0, 
+                              plot.margin = unit(c(-0.75, 0, -0.75, 0), "cm"),
+                              ...) {
+      
+      plot_list<- purrr::map(features, function(x) modify_vlnplot(obj = obj,feature = x, grouped = group.by, pt.size = p_size))
+      
+      # Add back x-axis title to bottom plot. patchwork is going to support this?
+      plot_list[[length(plot_list)]]<- plot_list[[length(plot_list)]] +
+        theme(axis.text.x=element_text(angle = 90), axis.ticks.x = element_line())
+      
+      # change the y-axis tick to only max value 
+      ymaxs<- purrr::map_dbl(plot_list, extract_max)
+      #finds highest ymax, normalize
+      ymaxs<- max(sapply(ymaxs, max))
+      plot_list<- purrr::map2(plot_list, ymaxs, function(x,y) x + 
+                                scale_y_continuous(breaks = c(y)) + 
+                                expand_limits(y = y))
+      
+      p<- patchwork::wrap_plots(plotlist = plot_list, ncol = 1)
+      return(p)
+    }
+    
+    g <- StackedVlnPlot(obj = seurat_obj, features = selected)
+    
+    return(g)
+    
+    
+  })
+  
+  output$cellSelectGStkdVln <- renderUI({ # New cell type select
+    pickerInput("cellIdentsGStkdVln", "Add or remove clusters:",
+                choices = as.character(printIdents()), multiple = TRUE,
+                selected = as.character(printIdents()), options = list(
+                  `actions-box` = TRUE), width = "85%")
+  })
+  
+  mismatchGStkdVln <- function() {
+    seurat_obj <- SelectDataset()
+    
+    selected <- unique(unlist(strsplit(input$vlnGStkdGenes, " ")))
+    
+    mismatch <- ifelse(!selected %in% c(com_name,ens_id),
+                       selected[!selected %in% c(com_name,ens_id,
+                       rownames(seurat_obj[["RNA"]]@data))],"")
+    return(mismatch)
+  }
+  
+  output$notInGStkdVln <- renderText({input$runGStkdVlnPlot
+    isolate({mismatchGStkdVln()})
+  })
+  
+  output$SelectedDataGStkdVln <- renderText({input$runGStkdVlnPlot
+    isolate({input$Analysis})
+  })
+  
+  output$myGStkdVlnPlotF <- renderPlot({input$runGStkdVlnPlot
+    isolate({withProgress({p <- GStkdVlnPlotF(); print(p)},
+                          message = "Rendering plot..",
+                          min = 0, max = 10, value = 10)
+    })
+  })
+  
+  getHeightGStkdVln <- function() {
+    l <- getLenInput(input$vlnGStkdGenes)
+    if (l == 1) {h <- as.numeric(800)
+    } else {
+      h <- as.numeric(ceiling(l) * 175)
+      #h <- paste0(h, "px")
+    }
+    return(h)
+  }
+  
+  output$plot.uiGStkdVlnPlotF <- renderUI({input$runGStkdVlnPlot
+    isolate({h <- getHeightGStkdVln(); plotOutput("myGStkdVlnPlotF",
+                                                 width = "950px", height = paste0(h, "px"))})
+  })
+  
+  output$downloadGStkdVlnPlot <- downloadHandler(
+    filename = "GStkdViolin_plot.pdf", content = function(file) {
+      pdf(file,
+          width = 14,
+          height = 3 * getLenInput(input$vlnGStkdGenes))#* getLenInput(input$vlnStkdGenes))
+      print(GStkdVlnPlotF())
+      dev.off()
+    }
+  )
   
   # # ======== Ridge Plot ======== #
   # RdgPlotF <- reactive({
@@ -473,7 +776,7 @@ server <- function(input, output) {
     clustering <- input$dPlotClust
     if (clustering == TRUE) {
       seurat_obj <- SelectDataset()
-      selected <- unlist(strsplit(input$dotGenes, " "))
+      selected <- unique(unlist(strsplit(input$dotGenes, " ")))
       
       ifelse(selected %in% com_name,
              selected <- selected[selected %in% com_name],
@@ -481,6 +784,9 @@ server <- function(input, output) {
              ifelse(selected %in% ens_id,
                     selected <- gene_df[ens_id %in% selected, 3],"")
       )
+      
+      #remove not found in scaled matrix obj
+      selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
       
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDot]
       
@@ -524,7 +830,7 @@ server <- function(input, output) {
       
     } else{
       seurat_obj <- SelectDataset()
-      selected <- unlist(strsplit(input$dotGenes, " "))
+      selected <- unique(unlist(strsplit(input$dotGenes, " ")))
       
       ifelse(selected %in% com_name,
              selected <- selected[selected %in% com_name],
@@ -533,31 +839,36 @@ server <- function(input, output) {
                     selected <- gene_df[ens_id %in% selected, 3],"")
       )
       
+      #remove not found in scaled matrix obj
+      selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
+      
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDot]
       
       group.by <- input$selectGrpDot
       
       print(input$cellIdentsDot)
-      
-      g <- DotPlot(seurat_obj, features = selected,
+
+      g <- DotPlot(seurat_obj, features = rev(selected),
                    cols = "RdYlBu", dot.scale = input$dotScale,
                    group.by = input$selectGrpDot)
       
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
-        theme(plot.title = element_text(face = "plain", size = 14))
+        theme(plot.title = element_text(face = "plain", size = 14)) 
+      
       
       g <- g + coord_flip() + theme(
-        axis.text.x = element_text(angle = 90, hjust = 1))
+        axis.text.x = element_text(angle = 90, hjust = 1)) 
       if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpDot == "cell.type.ident") {
-        g <- DotPlot(seurat_obj, features = selected,
+        g <- DotPlot(seurat_obj, features = rev(selected),
                      cols = "RdYlBu", dot.scale = input$dotScale,
                      group.by = "seurat_clusters")
-        
+
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
-          theme(plot.title = element_text(face = "plain", size = 14))
-        
+          theme(plot.title = element_text(face = "plain", size = 14)) +
+          ylim(rev(levels(g$data$features.plot))) 
+
         g <- g + coord_flip() + theme(
           axis.text.x = element_text(angle = 90, hjust = 1))
       }
@@ -574,10 +885,12 @@ server <- function(input, output) {
   })
   
   mismatchDot <- function() {
-    selected <- unlist(strsplit(input$dotGenes, " "))
+    seurat_obj <- SelectDataset()
+    selected <- unique(unlist(strsplit(input$dotGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name,ens_id),
-                       selected[!selected %in% c(com_name,ens_id)],"")
+                       selected[!selected %in% c(com_name,ens_id,
+                      rownames(seurat_obj[["RNA"]]@data))],"")
     return(mismatch)
   }
   
@@ -595,23 +908,23 @@ server <- function(input, output) {
     })
   })
   
-  getHeightDot <- function() {
-    l <- getLenInput(input$dotGenes)
-    h <- paste0(as.character(l * 35), "px")
-    return(h)
-  }
-  
-  # ! check/change for project
-  # TODO create formula for n clusters/treats and dplot width
-  dplotWidth <- function () {
-    if(input$selectGrpDot == "cell.type.ident.by.data.set") {
-      w <- "2400px"
-    } else {
-      w <- "800px"
-    }
-    return(w)
-  }
-  
+  # getHeightDot <- function() {
+  #   l <- getLenInput(input$dotGenes)
+  #   h <- paste0(as.character(l * 35), "in")
+  #   return(h)
+  # }
+  # 
+  # # ! check/change for project
+  # # TODO create formula for n clusters/treats and dplot width
+  # dplotWidth <- function () {
+  #   if(input$selectGrpDot == "cell.type.ident.by.data.set") {
+  #     w <- "2400px"
+  #   } else {
+  #     w <- "800px"
+  #   }
+  #   return(w)
+  # }
+  # 
   # output$plot.uiDotPlotF <- renderUI({input$runDotPlot
   #   isolate({h <- getHeightDot(); plotOutput("myDotPlotF",
   #                                            width = dplotWidth(), height = h)
@@ -620,16 +933,22 @@ server <- function(input, output) {
   
   
   
-  dotHeight <- function() {
-    l <- getLenInput(input$dotGenes)
-    l <- as.numeric(l)
-    return(l)
-  }
-  
+  # dotHeight <- function() {
+  #   l <- getLenInput(input$dotGenes)
+  #   l <- as.numeric(l)
+  #   return(l)
+  # }
+  # 
+  # output$plot.uiDotPlotF <- renderUI({input$runDotPlot
+  #   isolate({h <- getHeightDot(); plotOutput("myDotPlotF",
+  #                                            width = paste0(input$manAdjustDotW, "in"),
+  #                                            height = paste0(input$manAdjustDotH, "in"))})
+  # })
+  # 
   output$plot.uiDotPlotF <- renderUI({input$runDotPlot
-    isolate({h <- getHeightDot(); plotOutput("myDotPlotF",
-                                             width = paste0(input$manAdjustDotW, "in"),
-                                             height = paste0(input$manAdjustDotH, "in"))})
+    isolate({plotOutput("myDotPlotF",
+             width = paste0(input$manAdjustDotW, "in"),
+             height = paste0(input$manAdjustDotH, "in"))})
   })
   
   output$downloadDotPlot <- downloadHandler(
@@ -642,86 +961,87 @@ server <- function(input, output) {
   )
   
   
-  # ======== Differential Expression ======== #
-  diffExp <- reactive({
-    seurat_obj <- SelectDataset()
-    seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDiff]
-    meta <- seurat_obj@meta.data
-    
-    print(input$identText1)
-    print(input$identText1)
-    subset1 <- as.character(input$identText1)
-    subset2 <- as.character(input$identText2)
-    
-    if ("data.set" %in% colnames(meta)) {
-      group1 <- rownames(meta[meta$data.set %in% subset1,])
-      group2 <- rownames(meta[meta$data.set %in% subset2,])
-    } else {
-      group1 <- rownames(meta[meta$cell.type.ident %in% subset1,])
-      group2 <- rownames(meta[meta$cell.type.ident %in% subset2,])
-    }
-    
-    diff_results <- FindMarkers(test.use = input$statSelectDiff,
-                                seurat_obj, ident.1 = group1, ident.2 = group2)
-    
-    diff_results$Gene.name.uniq <- ""
-    diff_results$Gene.name.uniq <- rownames(diff_results)
-    
-    pval <- as.numeric(input$pValCutoff)
-    diff_results <- diff_results[
-      diff_results$p_val_adj < pval, c(6,1:5)]
-    diff_results <<- diff_results[
-      order(diff_results$avg_logFC, decreasing = TRUE),]
-  })
   
-  # Requires input$identText to execute before diffExp()
-  diffReact <- eventReactive(c(input$identText1, input$identText2), diffExp())
-  
-  output$diffTable <- renderTable({input$runDiffExp
-    isolate({withProgress(diffReact(), message = "Calculating..",
-                          min = 0, max = 10, value = 10)}
-    )}, digits = -5)
-  
-  output$diffOut1 <- renderUI({
-    pickerInput("identText1", tags$b("Group 1 - positive FC"),
-                choices = as.character(printTreats()), multiple = TRUE,
-                selected = as.character(printTreats())[1], options = list(
-                  `actions-box` = TRUE), width = "80%")
-  })
-  
-  output$diffOut2 <- renderUI({
-    pickerInput("identText2", tags$b("Group 2 - negative FC"),
-                choices = as.character(printTreats()), multiple = TRUE,
-                selected = as.character(printTreats())[2],options = list(
-                  `actions-box` = TRUE), width = "80%")
-  })
-  
-  output$cellSelectDiff <- renderUI({ # New cell type select
-    pickerInput("cellIdentsDiff", "Add or remove clusters:",
-                choices = as.character(printIdents()), multiple = TRUE,
-                selected = as.character(printIdents()), options = list(
-                  `actions-box` = TRUE), width = "80%")
-  })
-  
-  output$SelectedDataDiff <- renderText({input$runDiffExp
-    isolate({input$Analysis})
-  })
-  
-  makeDiffTable <- function() {
-    markerTable <<- inner_join(diff_results,
-                               gene_df, by = "Gene.name.uniq")
-    return(markerTable)
-  }
-  
-  # qmethod "double" rids the table of escape backslashes
-  output$downloadDiffExp <- downloadHandler(
-    filename = "diff_exp_results.tsv",
-    content = function(file) {
-      write.table(makeDiffTable(), file,
-                  row.names = FALSE, col.names = TRUE,
-                  qmethod = "double", sep = "\t")
-    }
-  )
+  # # ======== Differential Expression ======== #
+  # diffExp <- reactive({
+  #   seurat_obj <- SelectDataset()
+  #   seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsDiff]
+  #   meta <- seurat_obj@meta.data
+  #   
+  #   print(input$identText1)
+  #   print(input$identText1)
+  #   subset1 <- as.character(input$identText1)
+  #   subset2 <- as.character(input$identText2)
+  #   
+  #   if ("data.set" %in% colnames(meta)) {
+  #     group1 <- rownames(meta[meta$data.set %in% subset1,])
+  #     group2 <- rownames(meta[meta$data.set %in% subset2,])
+  #   } else {
+  #     group1 <- rownames(meta[meta$cell.type.ident %in% subset1,])
+  #     group2 <- rownames(meta[meta$cell.type.ident %in% subset2,])
+  #   }
+  #   
+  #   diff_results <- FindMarkers(test.use = input$statSelectDiff,
+  #                               seurat_obj, ident.1 = group1, ident.2 = group2)
+  #   
+  #   diff_results$Gene.name.uniq <- ""
+  #   diff_results$Gene.name.uniq <- rownames(diff_results)
+  #   
+  #   pval <- as.numeric(input$pValCutoff)
+  #   diff_results <- diff_results[
+  #     diff_results$p_val_adj < pval, c(6,1:5)]
+  #   diff_results <<- diff_results[
+  #     order(diff_results$avg_logFC, decreasing = TRUE),]
+  # })
+  # 
+  # # Requires input$identText to execute before diffExp()
+  # diffReact <- eventReactive(c(input$identText1, input$identText2), diffExp())
+  # 
+  # output$diffTable <- renderTable({input$runDiffExp
+  #   isolate({withProgress(diffReact(), message = "Calculating..",
+  #                         min = 0, max = 10, value = 10)}
+  #   )}, digits = -5)
+  # 
+  # output$diffOut1 <- renderUI({
+  #   pickerInput("identText1", tags$b("Group 1 - positive FC"),
+  #               choices = as.character(printTreats()), multiple = TRUE,
+  #               selected = as.character(printTreats())[1], options = list(
+  #                 `actions-box` = TRUE), width = "80%")
+  # })
+  # 
+  # output$diffOut2 <- renderUI({
+  #   pickerInput("identText2", tags$b("Group 2 - negative FC"),
+  #               choices = as.character(printTreats()), multiple = TRUE,
+  #               selected = as.character(printTreats())[2],options = list(
+  #                 `actions-box` = TRUE), width = "80%")
+  # })
+  # 
+  # output$cellSelectDiff <- renderUI({ # New cell type select
+  #   pickerInput("cellIdentsDiff", "Add or remove clusters:",
+  #               choices = as.character(printIdents()), multiple = TRUE,
+  #               selected = as.character(printIdents()), options = list(
+  #                 `actions-box` = TRUE), width = "80%")
+  # })
+  # 
+  # output$SelectedDataDiff <- renderText({input$runDiffExp
+  #   isolate({input$Analysis})
+  # })
+  # 
+  # makeDiffTable <- function() {
+  #   markerTable <<- inner_join(diff_results,
+  #                              gene_df, by = "Gene.name.uniq")
+  #   return(markerTable)
+  # }
+  # 
+  # # qmethod "double" rids the table of escape backslashes
+  # output$downloadDiffExp <- downloadHandler(
+  #   filename = "diff_exp_results.tsv",
+  #   content = function(file) {
+  #     write.table(makeDiffTable(), file,
+  #                 row.names = FALSE, col.names = TRUE,
+  #                 qmethod = "double", sep = "\t")
+  #   }
+  # )
   
   
   # ======== Download meta data ======== #
@@ -737,7 +1057,7 @@ server <- function(input, output) {
     clustering <- input$pHmapClust  #enable row clustering
     if (clustering == TRUE){
       seurat_obj <- SelectDataset()
-      selected <- unlist(strsplit(input$PhmapGenes, " "))
+      selected <- unique(unlist(strsplit(input$PhmapGenes, " ")))
       
       ifelse(selected %in% com_name,
              selected <- selected[selected %in% com_name],
@@ -745,6 +1065,9 @@ server <- function(input, output) {
              ifelse(selected %in% ens_id,
                     selected <- gene_df[ens_id %in% selected, 3],"")
       )
+      
+      #remove not found in scaled matrix obj
+      selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
       
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsHmap]
       
@@ -759,6 +1082,7 @@ server <- function(input, output) {
       dotplot$data$groupIdent <- gsub("(.+?)(\\_.*)", "\\1",dotplot$data$id)
       dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
       
+      
       g <- ggplot(dotplot$data, aes(id, features.plot, fill= avg.exp.scaled)) +
         geom_tile(color = "gray", size = 1) +
         scale_fill_distiller(
@@ -767,7 +1091,7 @@ server <- function(input, output) {
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
               strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
-        facet_grid( ~ groupIdent, scales='free_x')
+        facet_grid( ~ groupIdent, scales='free_x') 
       
       
       g <- g + labs(title = paste("Selected analysis:",
@@ -788,7 +1112,7 @@ server <- function(input, output) {
           theme_ipsum()+
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
                 axis.title.y.right = element_text(size=13),
-                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12))
+                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) 
         
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -798,7 +1122,7 @@ server <- function(input, output) {
       
     } else {
       seurat_obj <- SelectDataset()
-      selected <- unlist(strsplit(input$PhmapGenes, " "))
+      selected <- unique(unlist(strsplit(input$PhmapGenes, " ")))
       
       ifelse(selected %in% com_name,
              selected <- selected[selected %in% com_name],
@@ -806,6 +1130,9 @@ server <- function(input, output) {
              ifelse(selected %in% ens_id,
                     selected <- gene_df[ens_id %in% selected, 3],"")
       )
+      
+      #remove not found in scaled matrix obj
+      selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
       
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsHmap]
       print(input$cellIdentsHmap)
@@ -817,12 +1144,6 @@ server <- function(input, output) {
       dotplot$data$groupIdent <- gsub("(.+?)(\\_.*)", "\\1",dotplot$data$id)
       dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
       
-      #applies to ptime objects
-      if(input$Analysis %in% multiple_idents_seurObj[2:3]){
-        dotplot$data$groupIdent <- gsub("^.*\\.", "",dotplot$data$id)
-        dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,levels=levels(seurat_obj$cell.type.ident))
-      }
-      
       g <- ggplot(dotplot$data, aes(id, features.plot,fill= avg.exp.scaled, width = 1, height = 1)) +
         geom_tile(color = "gray", size = 1) +
         scale_fill_distiller(
@@ -831,14 +1152,15 @@ server <- function(input, output) {
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
               strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
-        facet_grid( ~ groupIdent, scales='free_x')
-      
+        facet_grid( ~ groupIdent, scales='free_x') +
+        ylim(rev(levels(dotplot$data$features.plot))) 
+       
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
         theme(plot.title = element_text(face = "plain", size = 14))
       
-      
-      if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpHmap == "cell.type.ident"){
+  
+        if (input$Analysis %notin% multiple_idents_seurObj && input$selectGrpHmap == "cell.type.ident"){
         dotplot <- DotPlot(seurat_obj, features = selected,
                            group.by = "seurat_clusters")
         
@@ -852,7 +1174,8 @@ server <- function(input, output) {
           theme_ipsum()+
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
                 axis.title.y.right = element_text(size=13),
-                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12))
+                strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
+          ylim(rev(levels(dotplot$data$features.plot))) 
         
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -874,10 +1197,13 @@ server <- function(input, output) {
   })
   
   mismatchPhmap <- function() {
-    selected <- unlist(strsplit(input$PhmapGenes, " "))
+    seurat_obj <- SelectDataset()
+    
+    selected <- unique(unlist(strsplit(input$PhmapGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name, ens_id),
-                       selected[!selected %in% c(com_name, ens_id)],"")
+                       selected[!selected %in% c(com_name, ens_id,
+                        rownames(seurat_obj[["RNA"]]@data))],"")
     return(mismatch)
   }
   
@@ -897,50 +1223,50 @@ server <- function(input, output) {
     })
   })
   
-  getHeightPhmap <- reactive({
-    l <- getLenInput(input$PhmapGenes)
-    h <- as.numeric(l * 35)
-    return(h)
-  })
-  
-  getWidthPhmap <- function() {
-    if(input$selectGrpHmap == "cell.type.ident.by.data.set") {
-      w <- "1200"
-    } else {
-      w <- "800"
-    }
-    return(w)
-  }
-  
-  # output$plot.uiPheatmapF <- renderUI({input$runPhmap
-  #   isolate({
-  #     w <- paste0(getWidthPhmap()); h <- paste0(getHeightPhmap())
-  #     plotOutput("myPhmapF", width = paste0(w, "px"), height = paste0(h, "px"))
-  #   })
+  # getHeightPhmap <- reactive({
+  #   l <- getLenInput(input$PhmapGenes)
+  #   h <- as.numeric(l * 35)
+  #   return(h)
   # })
   # 
-  output$plot.uiPheatmapF <- renderUI({input$runPhmap
-    isolate({h <- getHeightPhmap(); plotOutput("myPhmapF",
-                                               width = paste0(input$manAdjustHmapW, "in"),
-                                               height = paste0(input$manAdjustHmapH, "in"))})
-  })
+  # getWidthPhmap <- function() {
+  #   if(input$selectGrpHmap == "cell.type.ident.by.data.set") {
+  #     w <- "1200"
+  #   } else {
+  #     w <- "800"
+  #   }
+  #   return(w)
+  # }
   
+# 
+#   output$plot.uiPheatmapF <- renderUI({input$runPhmap
+#     isolate({h <- getHeightPhmap(); plotOutput("myPhmapF",
+#                                                width = paste0(input$manAdjustHmapW, "in"),
+#                                                height = paste0(input$manAdjustHmapH, "in"))})
+#   })
+  
+  output$plot.uiPheatmapF <- renderUI({input$runPhmap
+    isolate({plotOutput("myPhmapF",
+             width = paste0(input$manAdjustHmapW * 100, "px"),
+             height = paste0(input$manAdjustHmapH * 100, "px"))})
+  })
+
   #download
   output$downloadhmap <- downloadHandler(
     filename = "heatmap.png", content = function(file) {
       png(file, height = as.numeric(input$manAdjustHmapH),
-          width = as.numeric(input$manAdjustHmapW), units = "in", res = 300)
+          width = as.numeric(input$manAdjustHmapW), units = "in", res = 100)
       print(pHeatmapF())
       dev.off()
     }
   )
-  
+
   # # # ======== Individual Cell ggplot Heatmap ======== #
   IndvpHeatmapF <- reactive({
     clustering <- input$IndvpHmapClust  #enable row clustering
     if (clustering == TRUE){
       seurat_obj <- SelectDataset()
-      selected <- unlist(strsplit(input$IndvPhmapGenes, " "))
+      selected <- unique(unlist(strsplit(input$IndvPhmapGenes, " ")))
       
       ifelse(selected %in% com_name,
              selected <- selected[selected %in% com_name],
@@ -949,10 +1275,12 @@ server <- function(input, output) {
                     selected <- gene_df[ens_id %in% selected, 3],"")
       )
       
+      #remove not found in scaled matrix obj
+      selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
+      
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsIndvHmap]
       
-      seurat_obj <- seurat_obj[, sample(Cells(seurat_obj), 
-      size = round(as.numeric(input$cellDownSampleIndvHmap)*length(colnames(seurat_obj))), replace=F)]
+      seurat_obj <- seurat_obj[, sample(Cells(seurat_obj), size = round(as.numeric(input$cellDownSampleIndvHmap)*length(colnames(seurat_obj))), replace=F)]
       
       print(addmargins(table(seurat_obj$cell.type.ident))) #check
       
@@ -1008,7 +1336,7 @@ server <- function(input, output) {
               axis.ticks.x=element_blank(),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
               strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
-        facet_grid( ~ id, space = 'free', scales = 'free')
+        facet_grid( ~ id, space = 'free', scales = 'free') 
       
       g <- g + labs(title = paste("Selected analysis:",
                                   as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1061,7 +1389,7 @@ server <- function(input, output) {
                 axis.ticks.x=element_blank(),
                 axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
                 strip.text.x  = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 8)) + 
-          facet_grid( ~ id, space = 'free', scales = 'free')
+          facet_grid( ~ id, space = 'free', scales = 'free') 
         
         g <- g + labs(title = paste("Selected analysis:",
                                     as.character(input$Analysis)), subtitle = "", caption = "") +
@@ -1070,7 +1398,7 @@ server <- function(input, output) {
       
     } else {
       seurat_obj <- SelectDataset()
-      selected <- unlist(strsplit(input$IndvPhmapGenes, " "))
+      selected <- unique(unlist(strsplit(input$IndvPhmapGenes, " ")))
       
       ifelse(selected %in% com_name,
              selected <- selected[selected %in% com_name],
@@ -1078,12 +1406,13 @@ server <- function(input, output) {
              ifelse(selected %in% ens_id,
                     selected <- gene_df[ens_id %in% selected, 3],"")
       )
+      #remove not found in scaled matrix obj
+      selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
       
       seurat_obj <- seurat_obj[,IDtype() %in% input$cellIdentsIndvHmap]
       print(input$cellIdentsIndvHmap)
       
-      seurat_obj <- seurat_obj[, sample(Cells(seurat_obj),
-      size = round(as.numeric(input$cellDownSampleIndvHmap)*length(colnames(seurat_obj))), replace=F)]
+      seurat_obj <- seurat_obj[, sample(Cells(seurat_obj), size = round(as.numeric(input$cellDownSampleIndvHmap)*length(colnames(seurat_obj))), replace=F)]
       
       print(input$cellDownSampleIndvHmap)
       print(addmargins(table(seurat_obj$cell.type.ident))) #check
@@ -1123,7 +1452,7 @@ server <- function(input, output) {
         data$id <- factor(data$id, levels = levels(seurat_obj$data.set))
       }else if (group.by == "seurat_clusters"){
         data$id <- factor(data$id, levels = levels(seurat_obj$seurat_clusters))
-      }else{
+        }else{
         data$id <- factor(data$id, levels = levels(seurat_obj$cell.type.ident))
       }
       
@@ -1222,10 +1551,13 @@ server <- function(input, output) {
   
   
   mismatchIndvPhmap <- function() {
-    selected <- unlist(strsplit(input$IndvPhmapGenes, " "))
+    seurat_obj <- SelectDataset()
+    
+    selected <- unique(unlist(strsplit(input$IndvPhmapGenes, " ")))
     
     mismatch <- ifelse(!selected %in% c(com_name, ens_id),
-                       selected[!selected %in% c(com_name, ens_id)],"")
+                       selected[!selected %in% c(com_name, ens_id,
+                       rownames(seurat_obj[["RNA"]]@data))],"")
     return(mismatch)
   }
   
@@ -1245,39 +1577,38 @@ server <- function(input, output) {
     })
   })
   
-  getHeightIndvPhmap <- reactive({
-    l <- getLenInput(input$IndvPhmapGenes)
-    h <- as.numeric(l * 35)
-    return(h)
-  })
-  
-  getWidthIndvPhmap <- function() {
-    if(input$selectGrpIndvHmap == "cell.type.ident.by.data.set") {
-      w <- "1600"
-    } else {
-      w <- "800"
-    }
-    return(w)
-  }
+  # getHeightIndvPhmap <- reactive({
+  #   l <- getLenInput(input$IndvPhmapGenes)
+  #   h <- as.numeric(l * 35)
+  #   return(h)
+  # })
+  # 
+  # getWidthIndvPhmap <- function() {
+  #   if(input$selectGrpIndvHmap == "cell.type.ident.by.data.set") {
+  #     w <- "1600"
+  #   } else {
+  #     w <- "800"
+  #   }
+  #   return(w)
+  # }
   
   # output$plot.uiIndvpHeatmapF <- renderUI({input$runIndvPhmap
-  #   isolate({
-  #     w <- paste0(getWidthIndvPhmap()); h <- paste0(getHeightIndvPhmap())
-  #     plotOutput("myIndvPhmapF", width = paste0(w, "px"), height = paste0(h, "px"))
-  #   })
+  #   isolate({h <- getHeightIndvPhmap(); plotOutput("myIndvPhmapF",
+  #                                                  width = paste0(input$manAdjustIndvHmapW, "in"),
+  #                                                  height = paste0(input$manAdjustIndvHmapH, "in"))})
   # })
   
   output$plot.uiIndvpHeatmapF <- renderUI({input$runIndvPhmap
-    isolate({h <- getHeightIndvPhmap(); plotOutput("myIndvPhmapF",
-                   width = paste0(input$manAdjustIndvHmapW, "in"),
-                   height = paste0(input$manAdjustIndvHmapH, "in"))})
+    isolate({plotOutput("myIndvPhmapF",
+             width = paste0(input$manAdjustIndvHmapW, "in"),
+             height = paste0(input$manAdjustIndvHmapH, "in"))})
   })
   
   #download
   output$downloadIndvhmap <- downloadHandler(
     filename = "IndvHeatmap.png", content = function(file) {
-      png(file, height = as.numeric(input$manAdjustIndvHmapH),
-          width = as.numeric(input$manAdjustIndvHmapW), units = "in", res = 300)
+      pdf(file, height = as.numeric(input$manAdjustIndvHmapH),
+          width = as.numeric(input$manAdjustIndvHmapW), units = "in")
       print(IndvpHeatmapF())
       dev.off()
     }
@@ -1364,10 +1695,9 @@ server <- function(input, output) {
     }
   )
 } # Server close
-  
-  
-  
-  
-  
-  
-  
+
+
+
+
+
+
