@@ -455,7 +455,7 @@ tabPanel("Stacked Violin Plots by Gene", #fluid = FALSE,
 							       #  "Group cells by:", choices = list(Time = "data.set",
 							       # Cluster = "seurat_clusters"), width = "100%",selected = "data.set"))),
 							column(6,
-								numericInput("dotScale", "Dot diameter:", value = 10, min = 4,
+								numericInput("dotScale", "Dot diameter:", value = 7, min = 4,
 									step = 1, max = 20, width = "60%"), align = "center")
 					      ),
 
@@ -479,14 +479,25 @@ tabPanel("Stacked Violin Plots by Gene", #fluid = FALSE,
 #   column(11, style = "padding-top: 8px;",
 #     switchInput("manAdjustDot", value = FALSE))),
 					column(3, align = "left", numericInput(
-							"manAdjustDotW", label = "Width (inches):", value = 24, step = 50,
+							"manAdjustDotW", label = "Width (inches):", value = 14, step = 50,
 							width = "100%")),
 					column(3,  align = "left", numericInput(
 							"manAdjustDotH", label = "Height (inches):", value = 9, step = 50,
 							width = "100%"))
 				      ),
 				fluidRow(tags$br()),
-				column(12, uiOutput("plot.uiDotPlotF"))
+				column(12, uiOutput("plot.uiDotPlotF")),
+        fluidRow(tags$script("$(document).on('shiny:connected', function(event) {
+var myWidth = $(window).width();
+Shiny.onInputChange('shiny_width',myWidth)
+
+});"),
+
+tags$script("$(document).on('shiny:connected', function(event) {
+var myHeight = $(window).height();
+Shiny.onInputChange('shiny_height',myHeight)
+
+});"))
 				)
 			)
 			)
@@ -544,7 +555,7 @@ tabPanel("Stacked Violin Plots by Gene", #fluid = FALSE,
 				column(8, tags$hr()),
 				column(8, align = "left",
 					column(3, align = "left", numericInput(
-							"manAdjustHmapW", label = "Width (inches):", value = 24, step = 50,
+							"manAdjustHmapW", label = "Width (inches):", value = 12, step = 50,
 							width = "100%")),
 					column(3,  align = "left", numericInput(
 							"manAdjustHmapH", label = "Height (inches):", value = 9, step = 50,
@@ -612,7 +623,7 @@ tabPanel("Stacked Violin Plots by Gene", #fluid = FALSE,
 				column(8, tags$hr()),
 				column(8, align = "left",
 					column(3, align = "left", numericInput(
-							"manAdjustIndvHmapW", label = "Width (inches):", value = 24, step = 50,
+							"manAdjustIndvHmapW", label = "Width (inches):", value = 12, step = 50,
 							width = "100%")),
 					column(3,  align = "left", numericInput(
 							"manAdjustIndvHmapH", label = "Height (inches):", value = 9, step = 50,
