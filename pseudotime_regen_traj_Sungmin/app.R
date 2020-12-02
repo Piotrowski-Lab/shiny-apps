@@ -15,7 +15,6 @@ options(repos = BiocManager::repositories())
 	library(gtable)
 	library(grid)
 	library(devtools)
-library(sctransform)
 
 # devtools::load_all("/n/projects/nt2473/Analysis/Scripts/SeuratExtensions")
 # devtools::load_all("/n/projects/nt2473/Analysis/Scripts/CellTrajectoryExtensions")
@@ -139,7 +138,7 @@ type_trt_cols <- gg_color_hue(length(cell_type_trt))
 			" insm1a wnt2 sost sfrp1a pcna mki67 isl1 slc1a3a glula lfng cbln20 ebf3a",
 			" znf185 si:ch211-229d2.5 si:ch73-261i21.5 spaca4l foxp4 crip1")
 
-	app_title <- "Neuromast Regeneration Trajectory Inference"
+	app_title <- "Neuromast Regeneration Trajectory Analysis"
 
 	gene_df <- read.table("./data/Danio_Features_unique_Ens91_v2.tsv",
 			sep = "\t", header = TRUE, stringsAsFactors = FALSE)

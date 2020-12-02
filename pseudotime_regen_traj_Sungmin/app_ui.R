@@ -139,13 +139,27 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 					column(12, align = "center",
 						actionButton("runFeatPlot", "Generate Plots",
 							style = 'padding:5px; font-size:80%')),
-
+          
+					#download svg button
 					column(12, tags$hr(width = "50%"), align = "center"),
 					column(12, align = "center",
-						downloadButton("downloadFeaturePlotF", "Download SVG",
+						downloadButton("downloadSVGFeaturePlotF", "Download SVG",
 							style = 'padding:5px; font-size:80%')),
 
+					#download pdf button
+					column(12, tags$hr(width = "50%"), align = "center"),
+					column(12, align = "center",
+					       downloadButton("downloadPDFFeaturePlotF", "Download PDF",
+					                      style = 'padding:5px; font-size:80%')),
+					
+					#download png button
+					column(12, tags$hr(width = "50%"), align = "center"),
+					column(12, align = "center",
+					       downloadButton("downloadPNGFeaturePlotF", "Download PNG",
+					                      style = 'padding:5px; font-size:80%')),
+					
 					column(12, tags$br()),
+					
 					column(12, align = "center", uiOutput("cellSelectFeat")),
 
 					column(12, tags$br()),
@@ -159,11 +173,11 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 					column(12, tags$br()),
 					column(12, align = "center",
 							column(6, align = "left",
-								numericInput("featDPI", "Download quality (DPI):",
-									value = 200, min = 50, step = 25, max = 400, width = "100%")),
+								numericInput("nodeSize", "Input Node Size:",
+									value = 3, min = 1, step = 0.25, max = 5, width = "100%")),
 							column(6, align = "left",
-								numericInput("ptSizeFeature", "Input cell size:", value = 0.50,
-									min = 0.25, step = 0.25, max = 2.00, width = "100%"))
+								numericInput("ptSizeFeature", "Input cell size:", value = 1.0,
+									min = 0.25, step = 0.25, max = 4.00, width = "100%"))
 					      ),
 
 					fluidRow(tags$br()),
@@ -187,10 +201,7 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 				)
 		 )
 	)
-	), #end of feature plot tab
-#   ) #tabsetPanel
-# ) #end div
-# ,style = 'width:1550px;') #end
+	), 
 # ================ #
 	tabPanel("Pseudotime Line Plots", fluid = FALSE,
 			sidebarLayout(fluid = TRUE,
@@ -199,7 +210,7 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 
 					column(12, align = "left",
 						textInput("ptimeLinePlotGenes", "Insert gene name or ensembl ID:",
-							value = smpl_genes_single)),
+							value = smpl_genes_sm)),
 
 					column(12, align = "center",
 						actionButton("runPtimeLinePlot", "Generate Plots",
@@ -207,8 +218,18 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 
 					column(12, tags$hr(width = "50%"), align = "center"),
 					column(12, align = "center",
-						downloadButton("downloadPtimeLinePlotF", "Download SVG",
+						downloadButton("downloadSVGPtimeLinePlotF", "Download SVG",
 							style = 'padding:5px; font-size:80%')),
+					
+					column(12, tags$hr(width = "50%"), align = "center"),
+					column(12, align = "center",
+					       downloadButton("downloadPDFPtimeLinePlotF", "Download PDF",
+					                      style = 'padding:5px; font-size:80%')),
+					
+					column(12, tags$hr(width = "50%"), align = "center"),
+					column(12, align = "center",
+					       downloadButton("downloadPNGPtimeLinePlotF", "Download PNG",
+					                      style = 'padding:5px; font-size:80%')),
 
 # column(12, tags$br()),
 # column(12, align = "center", uiOutput("cellSelectFeat")),
