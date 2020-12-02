@@ -231,11 +231,11 @@ server <- function(input, output) {
 							shape = 21, stroke=I(0.75),
 							color="white",
 							fill="black",
-							size=I(2 * 1.5),
+							size=I(as.numeric(input$nodeSize) * 1.5),
 							na.rm=TRUE, branch_point_df) +
 					geom_text(aes_string(x="prin_graph_dim_1", y="prin_graph_dim_2",
 								label="branch_point_idx"),
-							size=I(2), color="white", na.rm=TRUE,
+							size=I(as.numeric(input$nodeSize)), color="white", na.rm=TRUE,
 							branch_point_df)
 
 #plot leaves
@@ -244,27 +244,27 @@ server <- function(input, output) {
 							shape = 21, stroke=I(0.75),
 							color="black",
 							fill="lightgray",
-							size=I(2 * 1.5),
+							size=I(as.numeric(input$nodeSize) * 1.5),
 							na.rm=TRUE,
 							leaf_df) +
 					geom_text(aes_string(x="prin_graph_dim_1", y="prin_graph_dim_2",
 								label="leaf_idx"),
-							size=I(2), color="black", na.rm=TRUE, leaf_df)
+							size=I(as.numeric(input$nodeSize)), color="black", na.rm=TRUE, 
+							leaf_df)
 
 					feat[[k]] <- feat[[k]] + #plot root node
 					geom_point(aes_string(x="prin_graph_dim_1", y="prin_graph_dim_2"),
 							shape = 21, stroke=I(0.75),
 							color="black",
 							fill="white",
-							size=I(2 * 1.5),
+							size=I(as.numeric(input$nodeSize) * 1.5),
 							na.rm=TRUE,
 							root_df) +
 					geom_text(aes_string(x="prin_graph_dim_1", y="prin_graph_dim_2",
 								label="root_idx"),
-							size=I(2), color="black", na.rm=TRUE, root_df)
+							size=I(as.numeric(input$nodeSize)), color="black", na.rm=TRUE, root_df)
 
 			}
-# return(plot_grid(plotlist = feat, ncol = 1))
 
 			pg <- plot_grid(plotlist = feat, ncol = 1) +
 				labs(title = paste("Selected analysis:",
@@ -314,17 +314,9 @@ server <- function(input, output) {
 					plotOutput("myFeaturePlotF", width = "840px", height = h)
 					})
 			})
-
-# output$downloadFeaturePlotF <- downloadHandler(
-# 					       filename = "Feature_plot.png", content = function(file) {
-# 						       png(file, units = "in", res = as.numeric(input$featDPI),
-# 							   width = 12, height = 12 * getLenInput(input$featureGenes))
-# 						       print(FeaturePlotF())
-# 						       dev.off()
-# 					       }
-# 					       )
-
-	output$downloadFeaturePlotF <- downloadHandler(
+  
+	#download SVG button
+	output$downloadSVGFeaturePlotF <- downloadHandler(
 			filename = "Feature_plot.svg", content = function(file) {
 			svg(file,
 					width = 12, height = 12 * getLenInput(input$featureGenes))
@@ -332,6 +324,27 @@ server <- function(input, output) {
 			dev.off()
 			}
 			)
+	
+	#download PDF button
+	output$downloadPDFFeaturePlotF <- downloadHandler(
+			filename = "Feature_plot.pdf", content = function(file) {
+			pdf(file, 
+					width = 12, height = 12 * getLenInput(input$featureGenes))
+			print(FeaturePlotF())
+			dev.off()
+				}
+			)
+	
+	#download pnf button
+	output$downloadPNGFeaturePlotF <- downloadHandler(
+	  filename = "Feature_plot.png", content = function(file) {
+	    png(file, 
+	        width = 12, height = 12 * getLenInput(input$featureGenes),
+	        units = "in", res = 300)
+	    print(FeaturePlotF())
+	    dev.off()
+	  }
+	)
 
 # # ======== Indv Gene Ptime Line Dynamics ======== #
 		PtimeLinePlotF <- reactive({
@@ -433,6 +446,10 @@ server <- function(input, output) {
 							lg <- lg + facet_wrap(~title)
 							lg <- lg+
 							theme(strip.text.x = element_text(size = 18))
+							
+							if(selected >1){
+							  lg <- lg + facet_wrap(~Gene.name.uniq, ncol=1)
+							}
 
 					}else{
 						plt_legend1 <- ggplot(central_traj_df) +
@@ -556,7 +573,10 @@ server <- function(input, output) {
 							p3 <- p3 + facet_wrap(~title)
 							p3 <- p3+
 							theme(strip.text.x = element_text(size = 18))
-
+              
+							if(selected >1){
+							  p3 <- p3 + facet_wrap(~Gene.name.uniq, ncol=1)
+							}
 # 3.3 extract "legends only" from ggplot object
 							legend1 <- get_legend(plt_legend1)
 							legend2 <- get_legend(plt_legend2)
@@ -627,16 +647,8 @@ server <- function(input, output) {
 					})
 			})
 
-# output$downloadPtimeLinePlotF <- downloadHandler(
-#   filename = "Feature_plot.png", content = function(file) {
-#     png(file, units = "in", res = as.numeric(input$featDPI),
-#         width = 12, height = 12 * getLenInput(input$ptimeLinePlotGenes))
-#     print(PtimeLinePlotF())
-#     dev.off()
-#   }
-# )
-
-	output$downloadPtimeLinePlotF <- downloadHandler(
+  #Download SVG
+	output$downloadSVGPtimeLinePlotF <- downloadHandler(
 			filename = "Ptime_line_dynamic_plot.svg", content = function(file) {
 			if (input$selectGrpPtimeLinePlot == "NoLegend"){
 			svg(file, 
@@ -651,6 +663,60 @@ server <- function(input, output) {
 			}
 			}
 			)
+	
+	#Download SVG
+	output$downloadSVGPtimeLinePlotF <- downloadHandler(
+	  filename = "Ptime_line_dynamic_plot.svg", content = function(file) {
+	    if (input$selectGrpPtimeLinePlot == "NoLegend"){
+	      svg(file, 
+	          width = 12, height = 5 * getLenInput(input$ptimeLinePlotGenes))
+	      print(PtimeLinePlotF())
+	      dev.off()
+	    }else{
+	      svg(file, 
+	          width = 12, height = 9 * getLenInput(input$ptimeLinePlotGenes))
+	      print(PtimeLinePlotF())
+	      dev.off()
+	    }
+	  }
+	)
+	
+	#Download PDF
+	output$downloadPDFPtimeLinePlotF <- downloadHandler(
+	  filename = "Ptime_line_dynamic_plot.pdf", content = function(file) {
+	    if (input$selectGrpPtimeLinePlot == "NoLegend"){
+	      pdf(file, 
+	          width = 12, height = 5 * getLenInput(input$ptimeLinePlotGenes))
+	      print(PtimeLinePlotF())
+	      dev.off()
+	    }else{
+	      pdf(file, 
+	          width = 12, height = 9 * getLenInput(input$ptimeLinePlotGenes))
+	      print(PtimeLinePlotF())
+	      dev.off()
+	    }
+	  }
+	)
+	
+	#Download PNG
+	output$downloadPNGPtimeLinePlotF <- downloadHandler(
+	  filename = "Ptime_line_dynamic_plot.png", content = function(file) {
+	    if (input$selectGrpPtimeLinePlot == "NoLegend"){
+	      png(file, 
+	          width = 12, height = 5 * getLenInput(input$ptimeLinePlotGenes),
+	          units = "in", res = 300)
+	      print(PtimeLinePlotF())
+	      dev.off()
+	    }else{
+	      png(file, 
+	          width = 12, height = 9 * getLenInput(input$ptimeLinePlotGenes),
+	          units = "in", res = 300)
+	      print(PtimeLinePlotF())
+	      dev.off()
+	    }
+	  }
+	)
+
 
 
 
