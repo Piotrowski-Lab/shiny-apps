@@ -127,7 +127,7 @@ server <- function(input, output) {
 				plotOutput("myDatFeatPlotH1", width = "1050px", height = "525px")
 				})
 
-	n_panels <- 1:3
+	n_panels <- 1:4
 
 		lapply(n_panels, function(i) {
 				output[[paste0("myDatFeatPlotV", i)]] <- 
@@ -301,7 +301,7 @@ server <- function(input, output) {
 
 	getHeightFeat <- function() {
 		l <- getLenInput(input$featureGenes)
-			if (l == 1) {h <- "1000px"
+			if (l == 1) {h <- "800px"
 			} else {
 				h <- as.character(ceiling(l) * 800)
 					h <- paste0(h, "px")
@@ -319,7 +319,7 @@ server <- function(input, output) {
 	output$downloadSVGFeaturePlotF <- downloadHandler(
 			filename = "Feature_plot.svg", content = function(file) {
 			svg(file,
-					width = 12, height = 12 * getLenInput(input$featureGenes))
+					width = 8, height = 8 * getLenInput(input$featureGenes))
 			print(FeaturePlotF())
 			dev.off()
 			}
@@ -329,7 +329,7 @@ server <- function(input, output) {
 	output$downloadPDFFeaturePlotF <- downloadHandler(
 			filename = "Feature_plot.pdf", content = function(file) {
 			pdf(file, 
-					width = 12, height = 12 * getLenInput(input$featureGenes))
+					width = 8, height = 8 * getLenInput(input$featureGenes))
 			print(FeaturePlotF())
 			dev.off()
 				}
@@ -339,7 +339,7 @@ server <- function(input, output) {
 	output$downloadPNGFeaturePlotF <- downloadHandler(
 	  filename = "Feature_plot.png", content = function(file) {
 	    png(file, 
-	        width = 12, height = 12 * getLenInput(input$featureGenes),
+	        width = 8, height = 8 * getLenInput(input$featureGenes),
 	        units = "in", res = 300)
 	    print(FeaturePlotF())
 	    dev.off()
@@ -358,38 +358,8 @@ server <- function(input, output) {
 							selected <- gene_df[ens_id %in% selected, 3],"")
 				      )
 
-#remove not found in norm matrix obj
+        #remove not found in norm matrix obj
 				selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
-
-				make_plot_df <- function(cds_sub, gene){
-				cds_sub <- cds_sub[rownames(cds_sub) %in% gene,]
-				cds_exprs <- as.matrix(SingleCellExperiment::counts(cds_sub))
-
-				count_mtx_sub <- cds_exprs
-#count_mtx_sub <- count_mtx_sub[!apply(count_mtx_sub,1,sum)==0,]
-				count_mtx_sub <- t(count_mtx_sub)
-				count_mtx_sub <- scale(log1p(count_mtx_sub))
-				count_mtx_sub <- as.data.frame(Seurat::MinMax(count_mtx_sub , min = -2.5,
-							max = 2.5))
-				mod1_df <- as.data.frame(count_mtx_sub)
-				mod1_df$Cell <- rownames(mod1_df)
-
-				mod1_df <- reshape2::melt(mod1_df)
-				colnames(mod1_df)[2:3] <- c("Gene.name.uniq","expression")
-
-
-				ptime_df <- data.frame(pseudotime = t(pseudotime(cds))[1,],
-						Cell = names(pseudotime(cds)),
-						cell_group = colData(cds)$cell.type.and.trt)
-
-#order cells in correspondence to ptime
-				mod1_df$Cell <- factor(mod1_df$Cell, levels = ptime_df$Cell)
-
-				plot_dt <- inner_join(mod1_df, ptime_df)
-
-
-				return(plot_dt)
-				}
 
 				central_traj_df <- make_plot_df(cds_sub = ptime_central_traj,
 						gene = selected)
@@ -399,6 +369,10 @@ server <- function(input, output) {
 					central_traj_geom_smooth_col <- "#00BE67"
 
 					main_traj_geom_smooth_col <- "#F8766D"
+					
+					# = add vertical line at branching point
+					branching_ptime <- get_branching_point(seurat_obj = seurat_obj,
+					                                       cds = cds)
 
 					if (input$selectGrpPtimeLinePlot == "NoLegend"){
 						lg <- ggplot(central_traj_df) +
@@ -436,7 +410,7 @@ server <- function(input, output) {
 							     ) +
 							labs(
 									x     = 'pseudotime'
-									,y    = 'z-scored gene expression'
+									,y    = 'scaled gene expression'
 							    )
 							lg <- lg +theme(legend.position="none", legend.title=element_blank()) +
 							guides(colour = guide_legend(override.aes = list(alpha = 1)))
@@ -447,151 +421,94 @@ server <- function(input, output) {
 							lg <- lg+
 							theme(strip.text.x = element_text(size = 18))
 							
+# add branching vertical line
+							lg <- lg +
+							  new_scale_color() + # add new scale color for geom_rug
+							  new_scale_fill() +# add new scale color for geom_rug
+							  geom_vline(data = branching_ptime, 
+							             aes(xintercept = pseudotime, color = "cell_group"),
+							             linetype=2) +
+							  scale_color_manual(name = " ",  values = "red",
+							                     labels = c("branching point"))
+							
 							if(selected >1){
 							  lg <- lg + facet_wrap(~Gene.name.uniq, ncol=1)
 							}
 
-					}else{
-						plt_legend1 <- ggplot(central_traj_df) +
-							geom_smooth(
-#colour=central_traj_geom_smooth_col,
-									span=0.2,
-									method='loess',
-#fill = central_traj_geom_smooth_col,
-									aes( x=pseudotime, y=expression,color="Central Cell Lineage", fill = "Central Cell Lineage"),
-									fullrange = TRUE)
-
-							plt_legend1 <- plt_legend1 +
-							geom_smooth(data = main_HC_traj_df,
-#colour=main_traj_geom_smooth_col,
-									span=0.2,
-									method='loess',
-#fill = main_traj_geom_smooth_col,
-									aes( x=pseudotime, y=expression, color="HC Lineage", fill = "HC Lineage"))
-
-							plt_legend1 <- plt_legend1 + scale_color_manual(name="Branching Trajectories",guide = 'legend',
-									values = c("Central Cell Lineage" = central_traj_geom_smooth_col,
-										"HC Lineage" = main_traj_geom_smooth_col)) + guides(guide_legend(override.aes = list(linetype = c("black","black"))))
-							plt_legend1 <- plt_legend1 + scale_fill_manual(name="Branching Trajectories",guide = 'legend',
-									values = c("Central Cell Lineage" = central_traj_geom_smooth_col,
-										"HC Lineage" = main_traj_geom_smooth_col))
-							plt_legend1 <- plt_legend1 + theme(legend.direction = "horizontal",legend.position = "bottom")
-
-							plt_legend1 <- plt_legend1 +
-							guides(colour = guide_legend(title.position = "top",title.hjust = 0.5))
-
-
-
-							plt_legend2 <- ggplot(central_traj_df) +
-							geom_smooth(
-									colour=central_traj_geom_smooth_col,
-									span=0.2,
-									method='loess',
-									fill = central_traj_geom_smooth_col,
-									aes( x=pseudotime, y=expression,color="Central Cell Lineage", fill = "Central Cell Lineage"),
-									fullrange = TRUE)
-
-							plt_legend2 <- plt_legend2 +
-							geom_smooth(data = main_HC_traj_df,
-									colour=main_traj_geom_smooth_col,
-									span=0.2,
-									method='loess',
-									fill = main_traj_geom_smooth_col,
-									aes( x=pseudotime, y=expression, color="HC Lineage", fill = "HC Lineage"))
-
-
-							plt_legend2 <- plt_legend2 + geom_rug(data=main_HC_traj_df, sides='b',
-									alpha=.10, aes(x=pseudotime,
-										color = cell_group) )
-
-							plt_legend2 <- plt_legend2 + geom_rug(data=central_traj_df, sides='t', alpha=.10,
-									aes(x=pseudotime,
-										color = cell_group) )
-
-							plt_legend2 <- plt_legend2 + scale_color_manual(values = type_trt_cols)
-							plt_legend2 <-   plt_legend2 + theme_bw() +
-							theme(
-							     ) +
-							labs(
-									x     = 'pseudotime'
-									,y    = 'z-scored gene expression'
-							    )
-							plt_legend2 <- plt_legend2 +theme(legend.position="bottom", legend.title=element_blank()) +
-							guides(colour = guide_legend(override.aes = list(alpha = 1)))
-
-#add facet title to
-							plt_legend2$data$title <- unique(plt_legend2$data$Gene.name.uniq)
-							plt_legend2 <- plt_legend2 + facet_wrap(~title)
-							plt_legend2 <- plt_legend2+
-							theme(strip.text.x = element_text(size = 18))
-
-#no legend plot
-							p3 <- ggplot(central_traj_df) +
-							geom_smooth(
-									colour=central_traj_geom_smooth_col,
-									span=0.2,
-									method='loess',
-									fill = central_traj_geom_smooth_col,
-									aes( x=pseudotime, y=expression,fill="Central Cell Lineage"),
-									fullrange = TRUE)
-
-							p3 <- p3 +
-							geom_smooth(data = main_HC_traj_df,
-									colour=main_traj_geom_smooth_col,
-									span=0.2,
-									method='loess',
-									fill = main_traj_geom_smooth_col,
-									aes( x=pseudotime, y=expression, fill="HC Lineage"))
-
-							p3 <- p3 + scale_fill_manual(name="legend",guide = 'legend',
-									values = c("Central Cell Lineage" = central_traj_geom_smooth_col,
-										"HC Lineage" = main_traj_geom_smooth_col))
-# labels = c("test1", "test2"))
-#values=c(central_traj_geom_smooth_col, main_traj_geom_smooth_col))
-
-							p3 <- p3 + geom_rug(data=main_HC_traj_df, sides='b',
-									alpha=.10, aes(x=pseudotime,
-										color = cell_group) )
-
-							p3 <- p3 + geom_rug(data=central_traj_df, sides='t', alpha=.10,
-									aes(x=pseudotime,
-										color = cell_group) )
-
-							p3 <- p3 + scale_color_manual(values = type_trt_cols)
-							p3 <-   p3 + theme_bw() +
-							theme(
-							     ) +
-							labs(
-									x     = 'pseudotime'
-									,y    = 'z-scored gene expression'
-							    )
-							p3 <- p3 +theme(legend.position="none", legend.title=element_blank()) +
-							guides(colour = guide_legend(override.aes = list(alpha = 1)))
-
-#add facet title to
-							p3$data$title <- unique(p3$data$Gene.name.uniq)
-							p3 <- p3 + facet_wrap(~title)
-							p3 <- p3+
-							theme(strip.text.x = element_text(size = 18))
-              
+					}else{ #withLegend
+					  lg <- ggplot(central_traj_df) +
+					    geom_smooth(
+					      #colour=central_traj_geom_smooth_col,
+					      span=0.2,
+					      method='loess',
+					      #fill = central_traj_geom_smooth_col,
+					      aes( x=pseudotime, y=expression,color="Central Cell Lineage", fill = "Central Cell Lineage"),
+					      fullrange = TRUE)
+					  
+					  lg <- lg +
+					    geom_smooth(data = main_HC_traj_df,
+					                #colour=main_traj_geom_smooth_col,
+					                span=0.2,
+					                method='loess',
+					                #fill = main_traj_geom_smooth_col,
+					                aes( x=pseudotime, y=expression, color="HC Lineage", fill = "HC Lineage"))
+					  
+					  lg <- lg + scale_color_manual(name="Branching Trajectories",
+					                                guide = 'legend',
+					                                values = c("Central Cell Lineage" = central_traj_geom_smooth_col,
+					                                           "HC Lineage" = main_traj_geom_smooth_col)) + guides(guide_legend(override.aes = list(linetype = c("black","black"))))
+					  lg <- lg + scale_fill_manual(name="Branching Trajectories",guide = 'legend',
+					                               values = c("Central Cell Lineage" = central_traj_geom_smooth_col,
+					                                          "HC Lineage" = main_traj_geom_smooth_col))
+					  lg <- lg  +
+					    new_scale_color() + # add new scale color for branching point
+					    new_scale_fill() # add new scale color for branching point
+					  
+					  # add branching vertical line
+					  lg <- lg +
+					    new_scale_color() + # add new scale color for geom_rug
+					    new_scale_fill() +# add new scale color for geom_rug
+					    geom_vline(data = branching_ptime, 
+					               aes(xintercept = pseudotime, color = "cell_group"),
+					               linetype=2) +
+					    scale_color_manual(name = " ",  values = "red",
+					                       labels = c("branching point"))
+					  
+					  lg <- lg  +
+					    new_scale_color() + # add new scale color for geom_rug
+					    new_scale_fill() # add new scale color for geom_rug
+					  
+					  lg <- lg + geom_rug(data=main_HC_traj_df, sides='b',
+					                      alpha=.10, aes(x=pseudotime,
+					                                     color = cell_group) )
+					  
+					  lg <- lg + geom_rug(data=central_traj_df, sides='t', alpha=.10,
+					                      aes(x=pseudotime,
+					                          color = cell_group) )
+					  
+					  lg <- lg + scale_color_manual(values = type_trt_cols)
+					  lg <-   lg + theme_bw() +
+					    theme(
+					    ) +
+					    labs(
+					      x     = 'pseudotime'
+					      ,y    = 'scaled gene expression'
+					    )
+					  lg <- lg +theme(legend.position="bottom",
+					                  legend.box = "vertical",
+					                  legend.title=element_blank()) +
+					    guides(colour = guide_legend(override.aes = list(alpha = 1)))
+					  
+					  #add facet title to
+					  lg$data$title <- unique(lg$data$Gene.name.uniq)
+					  lg <- lg + facet_wrap(~title)
+					  lg <- lg+
+					    theme(strip.text.x = element_text(size = 18))
+					  
 							if(selected >1){
-							  p3 <- p3 + facet_wrap(~Gene.name.uniq, ncol=1)
+							  lg <- lg + facet_wrap(~Gene.name.uniq, ncol=1)
 							}
-# 3.3 extract "legends only" from ggplot object
-							legend1 <- get_legend(plt_legend1)
-							legend2 <- get_legend(plt_legend2)
 
-# 4.1 setup legends grid
-							legend1_grid <- cowplot::plot_grid(legend1, align = "v", nrow = 2)
-
-# 4.2 add second legend to grid, specifying its location
-							legends <- legend1_grid +
-							ggplot2::annotation_custom(
-									grob = legend2,
-									xmin = .5, xmax = .5, ymin = .3, ymax = .85
-									)
-							lg <- cowplot::plot_grid(p3, legends,
-									nrow = 2)
 					}
 
 				return(lg)
@@ -632,9 +549,9 @@ server <- function(input, output) {
 				}
 			}else{ #WithLegend
 
-				if (l == 1) {h <- "600px"
+				if (l == 1) {h <- "400px"
 				} else {
-					h <- as.character(ceiling(l) * 600)
+					h <- as.character(ceiling(l) * 400)
 						h <- paste0(h, "px")
 				}
 			}
@@ -647,23 +564,6 @@ server <- function(input, output) {
 					})
 			})
 
-  #Download SVG
-	output$downloadSVGPtimeLinePlotF <- downloadHandler(
-			filename = "Ptime_line_dynamic_plot.svg", content = function(file) {
-			if (input$selectGrpPtimeLinePlot == "NoLegend"){
-			svg(file, 
-					width = 12, height = 5 * getLenInput(input$ptimeLinePlotGenes))
-			print(PtimeLinePlotF())
-			dev.off()
-			}else{
-			svg(file, 
-					width = 12, height = 9 * getLenInput(input$ptimeLinePlotGenes))
-			print(PtimeLinePlotF())
-			dev.off()
-			}
-			}
-			)
-	
 	#Download SVG
 	output$downloadSVGPtimeLinePlotF <- downloadHandler(
 	  filename = "Ptime_line_dynamic_plot.svg", content = function(file) {
@@ -674,7 +574,7 @@ server <- function(input, output) {
 	      dev.off()
 	    }else{
 	      svg(file, 
-	          width = 12, height = 9 * getLenInput(input$ptimeLinePlotGenes))
+	          width = 12, height = 7 * getLenInput(input$ptimeLinePlotGenes))
 	      print(PtimeLinePlotF())
 	      dev.off()
 	    }
@@ -691,7 +591,7 @@ server <- function(input, output) {
 	      dev.off()
 	    }else{
 	      pdf(file, 
-	          width = 12, height = 9 * getLenInput(input$ptimeLinePlotGenes))
+	          width = 12, height = 7 * getLenInput(input$ptimeLinePlotGenes))
 	      print(PtimeLinePlotF())
 	      dev.off()
 	    }
@@ -709,7 +609,7 @@ server <- function(input, output) {
 	      dev.off()
 	    }else{
 	      png(file, 
-	          width = 12, height = 9 * getLenInput(input$ptimeLinePlotGenes),
+	          width = 12, height = 7 * getLenInput(input$ptimeLinePlotGenes),
 	          units = "in", res = 300)
 	      print(PtimeLinePlotF())
 	      dev.off()
@@ -717,7 +617,206 @@ server <- function(input, output) {
 	  }
 	)
 
-
+	# # ======== Mulitple Gene Ptime Line Dynamics ======== #
+	MultiGPtimeLinePlotF <- reactive({
+	  selected <- unique(unlist(strsplit(input$multptimeLinePlotGenes, " ")))
+	  
+	  ifelse(selected %in% com_name,
+	         selected <- selected[selected %in% com_name],
+	         
+	         ifelse(selected %in% ens_id,
+	                selected <- gene_df[ens_id %in% selected, 3],"")
+	  )
+	  
+	  #remove not found in norm matrix obj
+	  selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
+	  
+	  central_traj_df <- make_plot_df(cds_sub = ptime_central_traj,
+	                                  gene = selected)
+	  main_HC_traj_df <- make_plot_df(cds_sub = ptime_main_traj,
+	                                  gene = selected)
+	  
+	  #order genes in order of input sequence 
+	  central_traj_df$Gene.name.uniq <- factor(central_traj_df$Gene.name.uniq, 
+	                                           levels = selected)
+	  main_HC_traj_df$Gene.name.uniq <- factor(main_HC_traj_df$Gene.name.uniq, 
+	                                           levels = selected)
+	  
+	  #specify trajectory trail
+	  central_traj_df $trajectory <- "Central Cell Lineage"
+	  main_HC_traj_df $trajectory <- "HC Lineage"
+	  
+	  #cancatenate two traj df 
+	  plot_dt <- rbind(central_traj_df,main_HC_traj_df)
+	  
+	  central_traj_geom_smooth_col <- "#00BE67"
+	  
+	  main_traj_geom_smooth_col <- "#F8766D"
+	  
+	  # = add vertical line at branching point
+	  branching_ptime <- get_branching_point(seurat_obj = seurat_obj, cds = cds)
+	  
+	  #add smoothing gene line
+	  p <- ggplot(data = plot_dt,
+	              mapping = aes(x = pseudotime, y = expression, color = Gene.name.uniq,
+	                            fill = Gene.name.uniq)) +
+	    geom_smooth(method ="loess", span = 0.2, fullrange = TRUE) 
+	  
+	  #add vertical line at branching point
+	  p <- p +
+	    new_scale_color() + # add new scale color for geom_rug
+	    new_scale_fill() +# add new scale color for geom_rug
+	    geom_vline(data = branching_ptime, aes(xintercept = pseudotime, color = "cell_group"),
+	               linetype=2) +
+	    scale_color_manual(name = " ",  values = "red",
+	                       labels = c("branching point"))
+	  
+	  #add geom_rug for dashed cell types
+	  p <- p+
+	    new_scale_color() + # add new scale color for geom_rug
+	    new_scale_fill() +# add new scale color for geom_rug
+	    geom_rug(data=plot_dt[plot_dt$trajectory == "Central Cell Lineage",], sides='b', 
+	             alpha=.10, aes(x=pseudotime, color = cell_group) ) +
+	    scale_color_manual(values = type_trt_cols, guide = "none") +
+	    new_scale_color() + # add new scale color for geom_rug
+	    new_scale_fill() +# add new scale color for geom_rug
+	    geom_rug(data=plot_dt[plot_dt$trajectory == "HC Lineage",], sides='b', 
+	             alpha=.10, aes(x=pseudotime, color = cell_group) ) +
+	    scale_color_manual(values = type_trt_cols) 
+	  
+	  #legend themes
+	  p <- p + theme_bw() +
+	    guides(colour = guide_legend(override.aes = list(alpha = 1)))+
+	    theme(
+	    ) +
+	    labs(
+	      x     = 'pseudotime'
+	      ,y    = 'z-scored gene expression'
+	    ) + 
+	    theme(legend.position="bottom", 
+	          legend.box = "vertical",
+	          legend.title=element_blank()) +
+	    facet_wrap(~ trajectory) + #split plot by trajectory path
+	    theme(strip.text.x = element_text(size = 18, face = "bold")) #+#specify facet title size 
+	    # ylim(ylim=c(min(ggplot_build(p)$data[[1]]$ymin,na.rm = TRUE), #dynamically plot min  and max y lim
+	    #                        max(ggplot_build(p)$data[[1]]$ymax,na.rm = TRUE)))
+	    # 
+	  
+	  # manually apply facet panel colors 
+	  g <- ggplot_gtable(ggplot_build(p))
+	  strips <- which(grepl('strip-', g$layout$name))
+	  
+	  pal <- c(central_traj_geom_smooth_col, main_traj_geom_smooth_col)
+	  
+	  for (i in seq_along(strips)) {
+	    k <- which(grepl('rect', g$grobs[[strips[i]]]$grobs[[1]]$childrenOrder))
+	    l <- which(grepl('titleGrob', g$grobs[[strips[i]]]$grobs[[1]]$childrenOrder))
+	    g$grobs[[strips[i]]]$grobs[[1]]$children[[k]]$gp$fill <- pal[i] #change facet  background label colors
+	    g$grobs[[strips[i]]]$grobs[[1]]$children[[l]]$children[[1]]$gp$col <- "white" #change facet letter colors
+	  }
+	  
+	  return(g)
+	  #return(g)
+	})
+	
+	mismatchMultiPtimeLinePlot <- function(seurat_obj) {
+	  #seurat_obj <- SelectDataset()
+	  
+	  selected <- unique(unlist(strsplit(input$multptimeLinePlotGenes, " ")))
+	  
+	  mismatch <- ifelse(!selected %in% c(com_name, ens_id),
+	                     selected[!selected %in% c(com_name, ens_id,
+	                                               rownames(seurat_obj[["RNA"]]@data))],"")
+	  return(mismatch)
+	}
+	
+	output$notInMultiPtimeLinePlot <- renderText({input$runMultiPtimeLinePlot
+	  isolate({mismatchMultiPtimeLinePlot()})
+	})
+	
+	
+	output$myMultiGPtimeLinePlotF <- renderPlot({input$runMultiPtimeLinePlot
+	  isolate({withProgress({p <- MultiGPtimeLinePlotF(); print(plot(p))},
+	                        message = "Rendering plot..", min = 0, max = 10, value = 10)})
+	})
+	
+	#do not need getHeightMultiPtimeLinePlot() for this tab
+	# getHeightMultiPtimeLinePlot <- function() {
+	#   l <- getLenInput(input$multptimeLinePlotGenes)
+	#     if (l == 1) {h <- "300px"
+	#     } else {
+	#       h <- as.character(ceiling(l) * 300)
+	#       h <- paste0(h, "px")
+	#     }
+	#     if (l == 1) {h <- "600px"
+	#     } else {
+	#       h <- as.character(ceiling(l) * 600)
+	#       h <- paste0(h, "px")
+	#     }
+	#   }
+	#   return(h)
+	# }
+	
+	output$plot.uiMultiGPtimeLinePlotF <- renderUI({input$runMultiPtimeLinePlot
+	  #isolate({h <- getHeightMultiPtimeLinePlot()
+	  plotOutput("myMultiGPtimeLinePlotF", width = "1000px", height = "700px")
+	  })
+	#})
+	
+	#Download SVG
+	output$downloadSVGMultiGPtimeLinePlotF <- downloadHandler(
+	  filename = "Multi_Ptime_line_dynamic_plot.svg", content = function(file) {
+	    # if (input$selectGrpMultiPtimeLinePlot == "NoLegend"){
+	    #   svg(file, 
+	    #       width = 12, height = 5)
+	    #   print(MultiGPtimeLinePlotF())
+	    #   dev.off()
+	    # }else{
+	      svg(file, 
+	          width = 14, height = 7.5)
+	      print(plot(MultiGPtimeLinePlotF()))
+	      dev.off()
+	   # }
+	  }
+	)
+	
+	
+	#Download PDF
+	output$downloadPDFMultiGPtimeLinePlotF <- downloadHandler(
+	  filename = "Multi_Ptime_line_dynamic_plot.pdf", content = function(file) {
+	    #if (input$selectGrpMultiPtimeLinePlot == "NoLegend"){
+	      pdf(file, 
+	          width = 14, height = 7.5)
+	    print(plot(MultiGPtimeLinePlotF()))
+	    dev.off()
+	    # }else{
+	    #   pdf(file, 
+	    #       width = 12, height = 6.5)
+	    #   print(MultiGPtimeLinePlotF())
+	    #   dev.off()
+	    # }
+	  }
+	)
+	
+	#Download PNG
+	output$downloadPNGMultiGPtimeLinePlotF <- downloadHandler(
+	  filename = "Multi_Ptime_line_dynamic_plot.png", content = function(file) {
+	    # if (input$selectGrpMultiPtimeLinePlot == "NoLegend"){
+	    #   png(file, 
+	    #       width = 12, height = 5,
+	    #       units = "in", res = 300)
+	    #   print(MultiGPtimeLinePlotF())
+	    #   dev.off()
+	    # }else{
+	      png(file, 
+	          width = 14, height = 7.5,
+	          units = "in", res = 300)
+	      print(plot(MultiGPtimeLinePlotF()))
+	      dev.off()
+	    #}
+	  }
+	)
+	
 
 
 } # Server close
