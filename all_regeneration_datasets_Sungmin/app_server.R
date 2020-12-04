@@ -952,9 +952,9 @@ server <- function(input, output) {
   })
   
   output$downloadDotPlot <- downloadHandler(
-    filename = "dot_plot.png", content = function(file) {
-      png(file, height = as.numeric(input$manAdjustDotH),
-          width = as.numeric(input$manAdjustDotW), units = "in", res = 300)
+    filename = "dot_plot.pdf", content = function(file) {
+      pdf(file, height = as.numeric(input$manAdjustDotH +3),
+          width = as.numeric(input$manAdjustDotW +3))
       print(DotPlotF())
       dev.off()
     }
@@ -1087,7 +1087,7 @@ server <- function(input, output) {
         geom_tile(color = "gray", size = 1) +
         scale_fill_distiller(
           palette = "RdYlBu") +
-        theme_ipsum() +
+        theme_ipsum(base_family = "sans") +
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
               strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
@@ -1109,7 +1109,7 @@ server <- function(input, output) {
           geom_tile(color = "gray", size = 1) +
           scale_fill_distiller(
             palette = "RdYlBu") +
-          theme_ipsum()+
+          theme_ipsum(base_family = "sans") +
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
                 axis.title.y.right = element_text(size=13),
                 strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) 
@@ -1148,7 +1148,7 @@ server <- function(input, output) {
         geom_tile(color = "gray", size = 1) +
         scale_fill_distiller(
           palette = "RdYlBu") +
-        theme_ipsum()+
+        theme_ipsum(base_family = "sans") +
         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.35, "lines"),
               strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
@@ -1171,7 +1171,7 @@ server <- function(input, output) {
           geom_tile(color = "gray", size = 1) +
           scale_fill_distiller(
             palette = "RdYlBu") +
-          theme_ipsum()+
+          theme_ipsum(base_family = "sans") +
           theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
                 axis.title.y.right = element_text(size=13),
                 strip.text.x  = element_text(vjust = 0.5, hjust=.5,size = 12)) +
@@ -1253,9 +1253,9 @@ server <- function(input, output) {
 
   #download
   output$downloadhmap <- downloadHandler(
-    filename = "heatmap.png", content = function(file) {
-      png(file, height = as.numeric(input$manAdjustHmapH),
-          width = as.numeric(input$manAdjustHmapW), units = "in", res = 100)
+    filename = "heatmap.pdf", content = function(file) {
+      pdf(file, height = as.numeric(input$manAdjustHmapH + 4),
+          width = as.numeric(input$manAdjustHmapW+4))
       print(pHeatmapF())
       dev.off()
     }
@@ -1331,7 +1331,7 @@ server <- function(input, output) {
         geom_tile(height = .95, width = 2) +
         scale_fill_distiller(
           palette = "RdYlBu") +
-        theme_ipsum()+
+        theme_ipsum(base_family = "sans") +
         theme(axis.text.x=element_blank(),
               axis.ticks.x=element_blank(),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
@@ -1384,7 +1384,7 @@ server <- function(input, output) {
           geom_tile(height = .95, width = 2) +
           scale_fill_distiller(
             palette = "RdYlBu") +
-          theme_ipsum()+
+          theme_ipsum(base_family = "sans") +
           theme(axis.text.x=element_blank(),
                 axis.ticks.x=element_blank(),
                 axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
@@ -1460,7 +1460,7 @@ server <- function(input, output) {
         geom_tile(height = .95, width = 2) +
         scale_fill_distiller(
           palette = "RdYlBu") +
-        theme_ipsum()+
+        theme_ipsum(base_family = "sans") +
         theme(axis.text.x=element_blank(),
               axis.ticks.x=element_blank(),
               axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
@@ -1515,7 +1515,7 @@ server <- function(input, output) {
           geom_tile(height = .95, width = 2) +
           scale_fill_distiller(
             palette = "RdYlBu") +
-          theme_ipsum()+
+          theme_ipsum(base_family = "sans") +
           theme(axis.text.x=element_blank(),
                 axis.ticks.x=element_blank(),
                 axis.title.y.right = element_text(size=13),panel.spacing = unit(.25, "lines"),
@@ -1606,9 +1606,9 @@ server <- function(input, output) {
   
   #download
   output$downloadIndvhmap <- downloadHandler(
-    filename = "IndvHeatmap.png", content = function(file) {
-      pdf(file, height = as.numeric(input$manAdjustIndvHmapH),
-          width = as.numeric(input$manAdjustIndvHmapW), units = "in")
+    filename = "IndvHeatmap.pdf", content = function(file) {
+      pdf(file, height = as.numeric(input$manAdjustIndvHmapH +3 ),
+          width = as.numeric(input$manAdjustIndvHmapW+3))
       print(IndvpHeatmapF())
       dev.off()
     }
