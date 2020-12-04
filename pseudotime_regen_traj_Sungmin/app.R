@@ -15,14 +15,9 @@ options(repos = BiocManager::repositories())
 	library(gtable)
 	library(grid)
 	library(devtools)
+  library(ggnewscale)
 
-# devtools::load_all("/n/projects/nt2473/Analysis/Scripts/SeuratExtensions")
-# devtools::load_all("/n/projects/nt2473/Analysis/Scripts/CellTrajectoryExtensions")
-# local <- TRUE
-# if(local){
-# devtools::load_all("/Volumes/projects/nt2473/Analysis/Scripts/SeuratExtensions")
-# devtools::load_all("/Volumes/projects/nt2473/Analysis/Scripts/CellTrajectoryExtensions")
-# }
+# ============================ functions section 
 	"%||%" <- devtools:::`%||%`
 
 `%notin%` <- Negate(`%in%`)
@@ -107,8 +102,80 @@ root_nodes <- function(cds, reduction_method="UMAP"){
 		return(root_pr_nodes)
 }
 
+#build ggplot2 plot
+make_plot_df <- function(cds_sub, gene){
+  cds_sub <- cds_sub[rownames(cds_sub) %in% gene,]
+  cds_exprs <- as.matrix(SingleCellExperiment::counts(cds_sub))
+  
+  count_mtx_sub <- cds_exprs
+  #count_mtx_sub <- count_mtx_sub[!apply(count_mtx_sub,1,sum)==0,]
+  count_mtx_sub <- t(count_mtx_sub)
+  count_mtx_sub <- scale(log1p(count_mtx_sub))
+  count_mtx_sub <- as.data.frame(Seurat::MinMax(count_mtx_sub , min = -2.5,
+                                                max = 2.5))
+  mod1_df <- as.data.frame(count_mtx_sub)
+  mod1_df$Cell <- rownames(mod1_df)
+  
+  mod1_df <- reshape2::melt(mod1_df)
+  colnames(mod1_df)[2:3] <- c("Gene.name.uniq","expression")
+  
+  
+  ptime_df <- data.frame(pseudotime = t(pseudotime(cds))[1,],
+                         Cell = names(pseudotime(cds)),
+                         cell_group = colData(cds)$cell.type.and.trt)
+  
+  #order cells in correspondence to ptime
+  mod1_df$Cell <- factor(mod1_df$Cell, levels = ptime_df$Cell)
+  
+  plot_dt <- inner_join(mod1_df, ptime_df)
+  
+  
+  return(plot_dt)
+}
 
-	files <- list.files("./data", pattern = ".RDS", full.names = TRUE)
+get_branching_point <- function(seurat_obj, cds){
+  x <- 1
+  y <- 2
+  ica_space_df <- t(cds@principal_graph_aux[["UMAP"]]$dp_mst) %>%
+    as.data.frame() %>%
+    dplyr::select_(prin_graph_dim_1 = x, prin_graph_dim_2 = y) %>%
+    dplyr::mutate(sample_name = rownames(.),
+                  sample_state = rownames(.))
+  
+  #get embedding info
+  embeddings <- as.data.frame(seurat_obj[["umap"]]@cell.embeddings)
+  embeddings$Cell <- rownames(embeddings)
+  #round
+  embeddings[,1:2] <- round(embeddings[,1:2],digits = 2)
+  
+  #get branching info from monocle princle graph
+  mst_branch_nodes <- branch_nodes(cds, reduction_method ="UMAP")
+  branch_point_df <- ica_space_df %>%
+    dplyr::slice(match(names(mst_branch_nodes), sample_name)) %>%
+    dplyr::mutate(branch_point_idx = seq_len(dplyr::n()))
+  
+  #identify branching point bt central + HC Lineage, #1
+  branch_point_df <- branch_point_df %>% filter(branch_point_idx == "1")
+  #round
+  branch_point_df[,1:2] <- round(branch_point_df[,1:2], digits = 2)
+  
+  #retrieve pseudotime, cell, cell group info
+  ptime_df <- data.frame(pseudotime = t(pseudotime(cds))[1,],
+                         Cell = names(pseudotime(cds)),
+                         cell_group = colData(cds)$cell.type.and.trt)
+  #join embedding info with pseudotime info
+  ptime_df <- inner_join(ptime_df, embeddings)
+  
+  branching_embedding <- ptime_df %>% filter(abs(UMAP_1 - as.numeric(branch_point_df$prin_graph_dim_1)) == min(abs(UMAP_1 - as.numeric(branch_point_df$prin_graph_dim_1)))) %>%
+    filter(abs(UMAP_2 - as.numeric(branch_point_df$prin_graph_dim_2)) == min(abs(UMAP_2 - as.numeric(branch_point_df$prin_graph_dim_2))))
+  
+  #extract first option, retrieve only the pseudotime val
+  branching_ptime <- branching_embedding[1,]
+  
+  return(branching_ptime)
+}
+
+files <- list.files("./data", pattern = ".RDS", full.names = TRUE)
 file_list <- list()
 
 	print("Loading Seurat objects...")
@@ -134,9 +201,7 @@ type_trt_cols <- gg_color_hue(length(cell_type_trt))
 
 	smpl_genes_single <- paste0("atoh1a")
 	smpl_genes_sm <- paste0("atoh1a her4.1")
-	smpl_genes_lg <- paste0("atoh1a her4.1 hes2.2 dld sox4a*1 myclb gadd45gb.1",
-			" insm1a wnt2 sost sfrp1a pcna mki67 isl1 slc1a3a glula lfng cbln20 ebf3a",
-			" znf185 si:ch211-229d2.5 si:ch73-261i21.5 spaca4l foxp4 crip1")
+	smpl_genes_lg <- paste0("atoh1a her4.1 hes2.2 dld sox4a*1")
 
 	app_title <- "Neuromast Regeneration Trajectory Analysis"
 

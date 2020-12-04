@@ -259,7 +259,66 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 				)
 		 )
 	)
-	) #end PtimeLinePlot tab
+ 	), #end PtimeLinePlot tab
+# 
+# ================ #Multi-Genes Pseudotime Line Plots tab
+tabPanel("Multi-Genes Pseudotime Line Plots", fluid = FALSE,
+         sidebarLayout(fluid = TRUE,
+
+                       sidebarPanel(width = 4,
+
+                                    column(12, align = "left",
+                                           textInput("multptimeLinePlotGenes", "Insert gene name or ensembl ID:",
+                                                     value = smpl_genes_lg)),
+
+                                    column(12, align = "center",
+                                           actionButton("runMultiPtimeLinePlot", "Generate Plots",
+                                                        style = 'padding:5px; font-size:80%')),
+
+                                    column(12, tags$hr(width = "50%"), align = "center"),
+                                    column(12, align = "center",
+                                           downloadButton("downloadSVGMultiGPtimeLinePlotF", "Download SVG",
+                                                          style = 'padding:5px; font-size:80%')),
+
+                                    column(12, tags$hr(width = "50%"), align = "center"),
+                                    column(12, align = "center",
+                                           downloadButton("downloadPDFMultiGPtimeLinePlotF", "Download PDF",
+                                                          style = 'padding:5px; font-size:80%')),
+
+                                    column(12, tags$hr(width = "50%"), align = "center"),
+                                    column(12, align = "center",
+                                           downloadButton("downloadPNGMultiGPtimeLinePlotF", "Download PNG",
+                                                          style = 'padding:5px; font-size:80%')),
+
+                                    # column(12, tags$br()),
+                                    # column(12, align = "center", uiOutput("cellSelectFeat")),
+
+                                    # column(12, tags$br()),
+                                    # column(12,  align = "center", radioGroupButtons("selectGrpMultiPtimeLinePlot",
+                                    #                                                 "Graph Choices:", choices = list(WithLegend = "WithLegend", NoLegend = "NoLegend"), width = "100%")),
+
+                                    fluidRow(tags$br()),
+                                    fluidRow(tags$br()),
+                                    column(12, uiOutput("plot.uiDatFeatPlotV4"), align = "center"),
+                                    fluidRow(tags$br()),
+                                    fluidRow(tags$br())
+                       ),
+
+                       mainPanel(
+                         fluidRow(
+                           column(8, tags$br()),
+                           column(8, tags$b("Mismatches or genes not present"),
+                                  "(if applicable)", tags$b(":")),
+                           column(8,uiOutput("notInMultiPtimeLinePlot")),
+                           column(8, tags$hr()),
+
+                           fluidRow(tags$br()),
+                           column(12, uiOutput("plot.uiMultiGPtimeLinePlotF")
+                           )
+                         )
+                       )
+         )
+) #end multiple gene tab
 	) #tabsetPanel
 #end div
 	,style = 'width:1550px;')) #end
