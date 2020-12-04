@@ -623,10 +623,12 @@ Shiny.onInputChange('shiny_height',myHeight)
 				column(8, tags$hr()),
 				column(8, align = "left",
 					column(3, align = "left", numericInput(
-							"manAdjustIndvHmapW", label = "Width (inches):", value = 12, step = 50,
+							"manAdjustIndvHmapW", label = "Width (inches):", value = 12, 
+							step = 1,
 							width = "100%")),
 					column(3,  align = "left", numericInput(
-							"manAdjustIndvHmapH", label = "Height (inches):", value = 9, step = 50,
+							"manAdjustIndvHmapH", label = "Height (inches):", value = 9,
+							step = 1,
 							width = "100%"))
 				      ),
 				fluidRow(tags$br()),
