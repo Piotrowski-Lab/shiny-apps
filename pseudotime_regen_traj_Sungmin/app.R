@@ -16,6 +16,7 @@ options(repos = BiocManager::repositories())
 	library(grid)
 	library(devtools)
   library(ggnewscale)
+  library(stringr)
 
 # ============================ functions section 
 	"%||%" <- devtools:::`%||%`
@@ -77,7 +78,6 @@ cleanUMAP <- function(plot_obj, dark = FALSE, axis_title_size = 16,
 					axis.title = element_text(size = axis_title_size))
 	}
 }
-
 # ========================== import CellTrajectoryExtension functions
 branch_nodes <- function(cds,reduction_method="UMAP"){
 	g = principal_graph(cds)[[reduction_method]]

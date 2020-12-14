@@ -318,7 +318,68 @@ tabPanel("Multi-Genes Pseudotime Line Plots", fluid = FALSE,
                          )
                        )
          )
-) #end multiple gene tab
+), #end multiple gene tab
+
+# ================ # Heatmap
+tabPanel("Heatmap", fluid = FALSE,
+         sidebarLayout(fluid = TRUE,
+                       
+                       sidebarPanel(width = 4,
+                                    
+                                    column(12, align = "left",
+                                           textInput("hmapGenes", "Insert gene name or ensembl ID:",
+                                                     value = smpl_genes_lg)),
+                                    
+                                    column(12, align = "center",
+                                           actionButton("runHmap", "Generate Plots",
+                                                        style = 'padding:5px; font-size:80%')),
+                                    
+                                    column(12, tags$hr(width = "50%"), align = "center"),
+                                    column(12, align = "center",
+                                           downloadButton("downloadSVGHeatmapF", "Download SVG",
+                                                          style = 'padding:5px; font-size:80%')),
+                                    
+                                    column(12, tags$hr(width = "50%"), align = "center"),
+                                    column(12, align = "center",
+                                           downloadButton("downloadPDFHeatmapF", "Download PDF",
+                                                          style = 'padding:5px; font-size:80%')),
+                                    
+                                    column(12, tags$hr(width = "50%"), align = "center"),
+                                    column(12, align = "center",
+                                           downloadButton("downloadPNGHeatmapF", "Download PNG",
+                                                          style = 'padding:5px; font-size:80%')),
+                                    
+    
+                                    fluidRow(tags$br()),
+                                    fluidRow(tags$br()),
+                                    column(12, uiOutput("plot.uiDatFeatPlotV5"), align = "center"),
+                                    fluidRow(tags$br()),
+                                    fluidRow(tags$br())
+                       ),
+                       
+                       mainPanel(
+                         fluidRow(
+                           column(8, tags$br()),
+                           column(8, tags$b("Mismatches or genes not present"),
+                                  "(if applicable)", tags$b(":")),
+                           column(8,uiOutput("notInHmap")),
+                           column(8, tags$hr()),
+                           
+                           column(8, align = "left",
+                                  column(3, align = "left", numericInput(
+                                    "manAdjustHmapW", label = "Width (inches):", value = 12, step = 1,
+                                    width = "100%")),
+                                  column(3,  align = "left", numericInput(
+                                    "manAdjustHmapH", label = "Height (inches):", value = 9, step = 1,
+                                    width = "100%"))
+                           ),
+                           fluidRow(tags$br()),
+                           column(12, uiOutput("plot.uiHeatmapF")
+                           )
+                         )
+                       )
+         )
+) #end hmap tab
 	) #tabsetPanel
 #end div
 	,style = 'width:1550px;')) #end

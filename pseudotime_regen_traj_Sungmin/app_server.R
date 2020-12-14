@@ -2,19 +2,9 @@
 
 server <- function(input, output) {
 
-# ======== Dataset selection ======== #
-# SelectDataset <- reactive({
-# 	seurat_obj <- file_list[[input$Analysis]]
-# 	print(names(file_list[input$Analysis]))
-# 
-# 	cluster_clrs <<- gg_color_hue(
-# 				      length(levels(seurat_obj@active.ident)))
-# 	return(seurat_obj)
-# })
 
 # Asks if multiple conditions are present
 	whichDataset <- function() {
-#seurat_obj <- SelectDataset()
 		if ("data.set" %in% colnames(seurat_obj@meta.data)) {
 			"data.set"
 		} else if ("cell.type.ident" %in% colnames(seurat_obj@meta.data)) {
@@ -24,7 +14,6 @@ server <- function(input, output) {
 	}
 
 	printTreats <- reactive({
-#seurat_obj <- SelectDataset()
 			print(seurat_obj)
 			if (whichDataset() == "data.set") {
 			sort(unique(seurat_obj@meta.data$data.set))
@@ -127,19 +116,32 @@ server <- function(input, output) {
 				plotOutput("myDatFeatPlotH1", width = "1050px", height = "525px")
 				})
 
-	n_panels <- 1:4
-
+		n_panels <- 1:4
+		
 		lapply(n_panels, function(i) {
-				output[[paste0("myDatFeatPlotV", i)]] <- 
-				renderPlot({DatFeatPlotF()[[2]]})
-				})
+		  output[[paste0("myDatFeatPlotV", i)]] <- 
+		    renderPlot({DatFeatPlotF()[[2]]})
+		})
+		
+		lapply(n_panels, function(i) {
+		  output[[paste0("plot.uiDatFeatPlotV", i)]] <- 
+		    renderUI({plotOutput(paste0("myDatFeatPlotV", i),
+		                         width = "425px", height = "880px")})
+		})
+		
+#sidepanel FeaturePlot for Heatmap tab
+ClustNumFeatPlotF <- function(){
+  clustUMAP <- DimPlot(seurat_obj, group.by = "tree.ident")
+  clustUMAP <- cleanUMAP(clustUMAP) + 
+    theme(legend.position="bottom")
+  return(clustUMAP)
+}
 
-	lapply(n_panels, function(i) {
-			output[[paste0("plot.uiDatFeatPlotV", i)]] <- 
-			renderUI({plotOutput(paste0("myDatFeatPlotV", i),
-						width = "425px", height = "880px")})
-			})
-
+# generate sidepanel FeaturePlot for Heatmap tab 
+output$myDatFeatPlotV5 <- renderPlot({ClustNumFeatPlotF()[[1]]})
+output$plot.uiDatFeatPlotV5 <- renderUI({
+  plotOutput("myDatFeatPlotV5", width = "425px", height = "525px")
+})
 
 # ======== Feature Plot ======== #
 	FeaturePlotF <- reactive({
@@ -504,7 +506,8 @@ server <- function(input, output) {
 					  lg <- lg + facet_wrap(~title)
 					  lg <- lg+
 					    theme(strip.text.x = element_text(size = 18))
-					  
+					    
+					    #handle multiple genes
 							if(selected >1){
 							  lg <- lg + facet_wrap(~Gene.name.uniq, ncol=1)
 							}
@@ -515,7 +518,6 @@ server <- function(input, output) {
 		})
 
 	mismatchPtimeLinePlot <- function(seurat_obj) {
-#seurat_obj <- SelectDataset()
 
 		selected <- unique(unlist(strsplit(input$ptimeLinePlotGenes, " ")))
 
@@ -529,9 +531,6 @@ server <- function(input, output) {
 			isolate({mismatchPtimeLinePlot()})
 			})
 
-# output$SelectedDataFeat <- renderText({input$runPtimeLinePlot
-# 	isolate({input$Analysis})
-# 			   })
 
 	output$myPtimeLinePlotF <- renderPlot({input$runPtimeLinePlot
 			isolate({withProgress({p <- PtimeLinePlotF(); print(p)},
@@ -691,7 +690,7 @@ server <- function(input, output) {
 	    ) +
 	    labs(
 	      x     = 'pseudotime'
-	      ,y    = 'z-scored gene expression'
+	      ,y    = 'scaled gene expression'
 	    ) + 
 	    theme(legend.position="bottom", 
 	          legend.box = "vertical",
@@ -702,7 +701,12 @@ server <- function(input, output) {
 	    #                        max(ggplot_build(p)$data[[1]]$ymax,na.rm = TRUE)))
 	    # 
 	  
-	  # manually apply facet panel colors 
+	    #dynamically adjust based on high and low geom smooth values y axis limits without dropping data
+	  # p <- p + coord_cartesian(ylim = c(min(ggplot_build(p)$data[[1]]$ymin,na.rm = TRUE), #dynamically plot min  and max y lim
+	  #                                   max(ggplot_build(p)$data[[1]]$ymax,na.rm = TRUE)))
+	  # 
+	  #p <- p + coord_cartesian(ylim = c(-1.5, 1.5))
+	  # # manually apply facet panel colors 
 	  g <- ggplot_gtable(ggplot_build(p))
 	  strips <- which(grepl('strip-', g$layout$name))
 	  
@@ -784,39 +788,169 @@ server <- function(input, output) {
 	#Download PDF
 	output$downloadPDFMultiGPtimeLinePlotF <- downloadHandler(
 	  filename = "Multi_Ptime_line_dynamic_plot.pdf", content = function(file) {
-	    #if (input$selectGrpMultiPtimeLinePlot == "NoLegend"){
 	      pdf(file, 
 	          width = 14, height = 7.5)
 	    print(plot(MultiGPtimeLinePlotF()))
 	    dev.off()
-	    # }else{
-	    #   pdf(file, 
-	    #       width = 12, height = 6.5)
-	    #   print(MultiGPtimeLinePlotF())
-	    #   dev.off()
-	    # }
 	  }
 	)
 	
 	#Download PNG
 	output$downloadPNGMultiGPtimeLinePlotF <- downloadHandler(
 	  filename = "Multi_Ptime_line_dynamic_plot.png", content = function(file) {
-	    # if (input$selectGrpMultiPtimeLinePlot == "NoLegend"){
-	    #   png(file, 
-	    #       width = 12, height = 5,
-	    #       units = "in", res = 300)
-	    #   print(MultiGPtimeLinePlotF())
-	    #   dev.off()
-	    # }else{
 	      png(file, 
 	          width = 14, height = 7.5,
 	          units = "in", res = 300)
 	      print(plot(MultiGPtimeLinePlotF()))
 	      dev.off()
-	    #}
 	  }
 	)
 	
+	# # ======== Cluster heatmap ======== #
+	HeatmapF <- reactive({
+	  selected <- unique(unlist(strsplit(input$hmapGenes, " ")))
+	  
+	  ifelse(selected %in% com_name,
+	         selected <- selected[selected %in% com_name],
+	         
+	         ifelse(selected %in% ens_id,
+	                selected <- gene_df[ens_id %in% selected, 3],"")
+	  )
+	  
+	  #remove not found in norm matrix obj
+	  selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
+	  
+	  # === build ggplot2 heatmap object
+	  # change current idents to heirarachical clusters num
+	  seurat_obj$tree.ident <- factor(seurat_obj$tree.ident)
+	  levels(seurat_obj$tree.ident) <- paste0("cluster",levels(seurat_obj$tree.ident))
+	  Idents(seurat_obj) <- "tree.ident"
+	  
+	  dotplot <- DotPlot(seurat_obj, features = selected,
+	                     group.by = "tree.ident")
+	  
+	  # specify trajectory group based on cluster number
+	  clusters <- as.character(dotplot$data$id)
+	  #specify treatment and sequencing technique (data.set)
+	  dotplot$data <- dotplot$data %>% mutate(groupIdent=case_when(
+	    str_detect(dotplot$data$id, "cluster3|cluster2|cluster7|cluster6") ~ "initial injury response", 
+	    str_detect(dotplot$data$id, "cluster8|cluster5|^cluster1$") ~ "HC Lineage",
+	    str_detect(dotplot$data$id, "cluster9|cluster4|^cluster10$") ~ "Central Cell Lineage",
+	    TRUE ~ as.character(dotplot$data$id)))
+	  
+	  #reorder levels/ build plotting df
+	  dotplot$data$groupIdent <- factor(dotplot$data$groupIdent,
+	                                    levels = c("initial injury response",
+	                                               "HC Lineage",
+	                                               "Central Cell Lineage"))
+	  
+	  dotplot$data$id <- factor(dotplot$data$id, 
+	                            levels = paste0("cluster",c(3,2,7,6,8,5,1,9,10,4)))
+	  
+	  plot_df <- dotplot$data
+	  
+	  # build ggplot obj
+	  p <- ggplot(plot_df, aes(id, features.plot,fill= avg.exp.scaled, width = 1, height = 1)) +
+	    geom_tile(color = "gray", size = .75) +
+	    scale_x_discrete(expand=c(0,0)) + #expand tile 
+	    scale_y_discrete(expand=c(0,0))+ #expand tile
+	    scale_fill_distiller(
+	      palette = "RdYlBu") +
+	    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=.5,size = 13),
+	          axis.title.y.right = element_blank(),
+	          panel.spacing = unit(.25, "lines"), #change facet spacing
+	          strip.text.x  = element_text(size = 14,face = "bold"), #change facet label 
+	          panel.background = element_blank(),
+	          axis.title.y  = element_blank()) +
+	    facet_grid( ~ groupIdent, scales='free_x') + #split heatmap by meta trajectory
+	    ylim(rev(levels(dotplot$data$features.plot))) #put first element in gene list on top of heatmap
+	  #scale_y_discrete(position = "right") # <---- uncomment if you want to put gene labels on the right side
+	  
+	  #= manually apply facet panel colors 
+	  g <- ggplot_gtable(ggplot_build(p))
+	  strips <- which(grepl('strip-', g$layout$name))
+	  
+	  pal <- c("#A3A500", "#F8766D", "#39B600")
+	  
+	  for (i in seq_along(strips)) {
+	    k <- which(grepl('rect', g$grobs[[strips[i]]]$grobs[[1]]$childrenOrder))
+	    l <- which(grepl('titleGrob', g$grobs[[strips[i]]]$grobs[[1]]$childrenOrder))
+	    g$grobs[[strips[i]]]$grobs[[1]]$children[[k]]$gp$fill <- pal[i] #change facet  background label colors
+	    g$grobs[[strips[i]]]$grobs[[1]]$children[[l]]$children[[1]]$gp$col <- "white" #change facet letter colors
+	  }
+	  return(g)
+	})
+	
+	mismatchHmap <- function(seurat_obj) {
+	  selected <- unique(unlist(strsplit(input$hmapGenes, " ")))
+	  
+	  mismatch <- ifelse(!selected %in% c(com_name, ens_id),
+	                     selected[!selected %in% c(com_name, ens_id,
+	                                               rownames(seurat_obj[["RNA"]]@data))],"")
+	  return(mismatch)
+	}
+	
+	output$notInHmap <- renderText({input$runHmap
+	  isolate({mismatchHmap()})
+	})
+	
+	
+	output$myHeatmapF <- renderPlot({input$runHmap
+	  isolate({withProgress({p <- HeatmapF(); print(plot(p))},
+	                        message = "Rendering plot..", min = 0, max = 10, value = 10)})
+	})
+	
+	# getHeightHmap <- function() {
+	#   l <- getLenInput(input$hmapGenes)
+	#     if (l == 1) {h <- "300px"
+	#     } else {
+	#       h <- as.character(ceiling(l) * 15)
+	#       h <- paste0(h, "px")
+	#     }
+	#   }
+	#   return(h)
+	# }
+	
+	output$plot.uiHeatmapF <- renderUI({input$runHmap
+	  #isolate({h <- getHeightHmap()
+	  plotOutput("myHeatmapF",
+	             width = paste0(input$manAdjustHmapW, "in"),
+	             height = paste0(input$manAdjustHmapH, "in"))})
 
+	
+	#Download SVG
+	output$downloadSVGHeatmapF <- downloadHandler(
+	  filename = "Heatmap.svg", content = function(file) {
+	    svg(file, 
+	        width = as.numeric(input$manAdjustHmapW), 
+	        height = as.numeric(input$manAdjustHmapH))
+	    print(plot(HeatmapF()))
+	    dev.off()
+	  }
+	)
+	
+	
+	#Download PDF
+	output$downloadPDFHeatmapF <- downloadHandler(
+	  filename = "Heatmap.pdf", content = function(file) {
+	    pdf(file, 
+	        width = as.numeric(input$manAdjustHmapW), 
+	        height = as.numeric(input$manAdjustHmapH))
+	    print(plot(HeatmapF()))
+	    dev.off()
+	  }
+	)
+	
+	#Download PNG
+	output$downloadPNGHeatmapF <- downloadHandler(
+	  filename = "Heatmap.png", content = function(file) {
+	    png(file, 
+	        width = as.numeric(input$manAdjustHmapW), 
+	        height = as.numeric(input$manAdjustHmapH),
+	        units = "in", res = 300)
+	    print(plot(HeatmapF()))
+	    dev.off()
+	  }
+	)
 
 } # Server close
