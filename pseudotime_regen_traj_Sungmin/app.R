@@ -1,6 +1,5 @@
 library(BiocManager)
 options(repos = BiocManager::repositories())
-#options(rsconnect.max.bundle.size=3145728000)
 	library(shiny)
 	library(cowplot)
 	library(Seurat)
@@ -82,7 +81,8 @@ cleanUMAP <- function(plot_obj, dark = FALSE, axis_title_size = 16,
 branch_nodes <- function(cds,reduction_method="UMAP"){
 	g = principal_graph(cds)[[reduction_method]]
 		branch_points <- which(igraph::degree(g) > 2)
-		branch_points = branch_points[branch_points %in% root_nodes(cds, reduction_method) == FALSE]
+		branch_points = branch_points[branch_points %in% root_nodes(cds, 
+		                                                reduction_method) == FALSE]
 		return(branch_points)
 }
 
@@ -195,7 +195,7 @@ names(file_list) <- as.character(c("ptime_main_traj", "ptime_central_traj",
 list2env(file_list,envir=.GlobalEnv)
 
 #preserve dataset colors 
-	cell_type_trt <- levels(cds$cell.type.and.trt)
+cell_type_trt <- levels(cds$cell.type.and.trt)
 type_trt_cols <- gg_color_hue(length(cell_type_trt))
 
 

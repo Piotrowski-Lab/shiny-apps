@@ -363,10 +363,10 @@ output$plot.uiDatFeatPlotV5 <- renderUI({
         #remove not found in norm matrix obj
 				selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
 
-				central_traj_df <- make_plot_df(cds_sub = ptime_central_traj,
-						gene = selected)
-					main_HC_traj_df <- make_plot_df(cds_sub = ptime_main_traj,
-							gene = selected)
+				# central_traj_df <- make_plot_df(cds_sub = ptime_central_traj,
+				# 		gene = selected)
+				# 	main_HC_traj_df <- make_plot_df(cds_sub = ptime_main_traj,
+				# 			gene = selected)
 
 					central_traj_geom_smooth_col <- "#00BE67"
 
@@ -375,6 +375,25 @@ output$plot.uiDatFeatPlotV5 <- renderUI({
 					# = add vertical line at branching point
 					branching_ptime <- get_branching_point(seurat_obj = seurat_obj,
 					                                       cds = cds)
+					
+					#if there is no cutoff on graph (use complete graph)
+					if (input$selectCutOffPtimeLinePlot == "NoCutOff"){
+					  central_traj_df <- make_plot_df(cds_sub = ptime_central_traj,
+					                                  gene = selected)
+					  main_HC_traj_df <- make_plot_df(cds_sub = ptime_main_traj,
+					                                  gene = selected)
+					  #if user selects for a cutoff right before the branching point
+					} else {
+					  central_traj_df <- make_plot_df(cds_sub = ptime_central_traj,
+					                                  gene = selected)
+					  central_traj_df <- central_traj_df[central_traj_df$pseudotime > 
+					                                       as.numeric(branching_ptime$pseudotime - 2),]
+					  main_HC_traj_df <- make_plot_df(cds_sub = ptime_main_traj,
+					                                  gene = selected)
+					  main_HC_traj_df <- main_HC_traj_df[main_HC_traj_df$pseudotime > 
+					                                       as.numeric(branching_ptime$pseudotime - 2),]
+					  
+					}
 
 					if (input$selectGrpPtimeLinePlot == "NoLegend"){
 						lg <- ggplot(central_traj_df) +
@@ -415,7 +434,9 @@ output$plot.uiDatFeatPlotV5 <- renderUI({
 									,y    = 'scaled gene expression'
 							    )
 							lg <- lg +theme(legend.position="none", legend.title=element_blank()) +
-							guides(colour = guide_legend(override.aes = list(alpha = 1)))
+							guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+							scale_x_continuous( expand = c(0, 0)) #remove gap below 0
+							
 
 #add facet title to
 							lg$data$title <- unique(lg$data$Gene.name.uniq)
@@ -499,7 +520,9 @@ output$plot.uiDatFeatPlotV5 <- renderUI({
 					  lg <- lg +theme(legend.position="bottom",
 					                  legend.box = "vertical",
 					                  legend.title=element_blank()) +
-					    guides(colour = guide_legend(override.aes = list(alpha = 1)))
+					    guides(colour = guide_legend(override.aes = list(alpha = 1))) +
+					    scale_x_continuous( expand = c(0, 0)) #remove gap below 0
+					  
 					  
 					  #add facet title to
 					  lg$data$title <- unique(lg$data$Gene.name.uniq)
@@ -630,11 +653,27 @@ output$plot.uiDatFeatPlotV5 <- renderUI({
 	  #remove not found in norm matrix obj
 	  selected <- selected[selected %in% rownames(seurat_obj[["RNA"]]@data)]
 	  
+	  # = add vertical line at branching point
+	  branching_ptime <- get_branching_point(seurat_obj = seurat_obj, cds = cds)
+	  
+	  #if there is no cutoff on graph (use complete graph)
+	  if (input$selectCutOffMultiGPtimeLinePlot == "NoCutOff"){
 	  central_traj_df <- make_plot_df(cds_sub = ptime_central_traj,
 	                                  gene = selected)
 	  main_HC_traj_df <- make_plot_df(cds_sub = ptime_main_traj,
 	                                  gene = selected)
-	  
+	  #if user selects for a cutoff right before the branching point
+	  } else {
+	    central_traj_df <- make_plot_df(cds_sub = ptime_central_traj,
+	                                    gene = selected)
+	    central_traj_df <- central_traj_df[central_traj_df$pseudotime > 
+	                                 as.numeric(branching_ptime$pseudotime - 2),]
+	    main_HC_traj_df <- make_plot_df(cds_sub = ptime_main_traj,
+	                                    gene = selected)
+	    main_HC_traj_df <- main_HC_traj_df[main_HC_traj_df$pseudotime > 
+	                                 as.numeric(branching_ptime$pseudotime - 2),]
+	    
+	  }
 	  #order genes in order of input sequence 
 	  central_traj_df$Gene.name.uniq <- factor(central_traj_df$Gene.name.uniq, 
 	                                           levels = selected)
@@ -642,8 +681,8 @@ output$plot.uiDatFeatPlotV5 <- renderUI({
 	                                           levels = selected)
 	  
 	  #specify trajectory trail
-	  central_traj_df $trajectory <- "Central Cell Lineage"
-	  main_HC_traj_df $trajectory <- "HC Lineage"
+	  central_traj_df$trajectory <- "Central Cell Lineage"
+	  main_HC_traj_df$trajectory <- "HC Lineage"
 	  
 	  #cancatenate two traj df 
 	  plot_dt <- rbind(central_traj_df,main_HC_traj_df)
@@ -651,9 +690,6 @@ output$plot.uiDatFeatPlotV5 <- renderUI({
 	  central_traj_geom_smooth_col <- "#00BE67"
 	  
 	  main_traj_geom_smooth_col <- "#F8766D"
-	  
-	  # = add vertical line at branching point
-	  branching_ptime <- get_branching_point(seurat_obj = seurat_obj, cds = cds)
 	  
 	  #add smoothing gene line
 	  p <- ggplot(data = plot_dt,
@@ -696,16 +732,15 @@ output$plot.uiDatFeatPlotV5 <- renderUI({
 	          legend.box = "vertical",
 	          legend.title=element_blank()) +
 	    facet_wrap(~ trajectory) + #split plot by trajectory path
-	    theme(strip.text.x = element_text(size = 18, face = "bold")) #+#specify facet title size 
-	    # ylim(ylim=c(min(ggplot_build(p)$data[[1]]$ymin,na.rm = TRUE), #dynamically plot min  and max y lim
-	    #                        max(ggplot_build(p)$data[[1]]$ymax,na.rm = TRUE)))
-	    # 
+	    theme(strip.text.x = element_text(size = 18, face = "bold")) + #+#specify facet title size 
+	    scale_x_continuous(breaks= scales::pretty_breaks()) + #create automatic x axis labels
+	    scale_x_continuous( expand = c(0, 0)) #remove gap below 0
 	  
 	    #dynamically adjust based on high and low geom smooth values y axis limits without dropping data
-	  # p <- p + coord_cartesian(ylim = c(min(ggplot_build(p)$data[[1]]$ymin,na.rm = TRUE), #dynamically plot min  and max y lim
-	  #                                   max(ggplot_build(p)$data[[1]]$ymax,na.rm = TRUE)))
-	  # 
-	  #p <- p + coord_cartesian(ylim = c(-1.5, 1.5))
+	   # p <- p + coord_cartesian(ylim = c(min(ggplot_build(p)$data[[1]]$ymin,na.rm = TRUE), #dynamically plot min  and max y lim
+	   #                                   max(ggplot_build(p)$data[[1]]$ymax,na.rm = TRUE)))
+	   # warning message: remove n rows means there was NA's in ggplot_build(p)$data[[1]]$ymin
+	 
 	  # # manually apply facet panel colors 
 	  g <- ggplot_gtable(ggplot_build(p))
 	  strips <- which(grepl('strip-', g$layout$name))
@@ -897,7 +932,10 @@ output$plot.uiDatFeatPlotV5 <- renderUI({
 	
 	output$myHeatmapF <- renderPlot({input$runHmap
 	  isolate({withProgress({p <- HeatmapF(); print(plot(p))},
-	                        message = "Rendering plot..", min = 0, max = 10, value = 10)})
+	                        message = "Rendering plot..", 
+	                        min = 0, 
+	                        max = 10, 
+	                        value = 10)})
 	})
 	
 	# getHeightHmap <- function() {
