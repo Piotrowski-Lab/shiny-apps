@@ -139,35 +139,35 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 					column(12, align = "center",
 						actionButton("runFeatPlot", "Generate Plots",
 							style = 'padding:5px; font-size:80%')),
-          
-					#download svg button
+
+#download svg button
 					column(12, tags$hr(width = "50%"), align = "center"),
 					column(12, align = "center",
 						downloadButton("downloadSVGFeaturePlotF", "Download SVG",
 							style = 'padding:5px; font-size:80%')),
 
-					#download pdf button
+#download pdf button
 					column(12, tags$hr(width = "50%"), align = "center"),
 					column(12, align = "center",
-					       downloadButton("downloadPDFFeaturePlotF", "Download PDF",
-					                      style = 'padding:5px; font-size:80%')),
-					
-					#download png button
+						downloadButton("downloadPDFFeaturePlotF", "Download PDF",
+							style = 'padding:5px; font-size:80%')),
+
+#download png button
 					column(12, tags$hr(width = "50%"), align = "center"),
 					column(12, align = "center",
-					       downloadButton("downloadPNGFeaturePlotF", "Download PNG",
-					                      style = 'padding:5px; font-size:80%')),
-					
+							downloadButton("downloadPNGFeaturePlotF", "Download PNG",
+								style = 'padding:5px; font-size:80%')),
+
 					column(12, tags$br()),
-					
+
 					column(12, align = "center", uiOutput("cellSelectFeat")),
 
 					column(12, tags$br()),
 					column(12,
-						column(6, textInput("CellBackCol",
-								"Cell background color:", value = "azure3")),
-						column(6, textInput("CellForeCol",
-								"Cell foreground color:", value = "blue3"))
+							column(6, textInput("CellBackCol",
+									"Cell background color:", value = "azure3")),
+							column(6, textInput("CellForeCol",
+									"Cell foreground color:", value = "blue3"))
 					      ),
 
 					column(12, tags$br()),
@@ -220,23 +220,34 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 					column(12, align = "center",
 						downloadButton("downloadSVGPtimeLinePlotF", "Download SVG",
 							style = 'padding:5px; font-size:80%')),
-					
+
 					column(12, tags$hr(width = "50%"), align = "center"),
 					column(12, align = "center",
-					       downloadButton("downloadPDFPtimeLinePlotF", "Download PDF",
-					                      style = 'padding:5px; font-size:80%')),
-					
+						downloadButton("downloadPDFPtimeLinePlotF", "Download PDF",
+							style = 'padding:5px; font-size:80%')),
+
 					column(12, tags$hr(width = "50%"), align = "center"),
 					column(12, align = "center",
-					       downloadButton("downloadPNGPtimeLinePlotF", "Download PNG",
-					                      style = 'padding:5px; font-size:80%')),
+							downloadButton("downloadPNGPtimeLinePlotF", "Download PNG",
+								style = 'padding:5px; font-size:80%')),
 
 # column(12, tags$br()),
 # column(12, align = "center", uiOutput("cellSelectFeat")),
 
 					column(12, tags$br()),
 					column(12,  align = "center", radioGroupButtons("selectGrpPtimeLinePlot",
-							"Graph Choices:", choices = list(WithLegend = "WithLegend", NoLegend = "NoLegend"), width = "100%")),
+								"Graph Choices:", 
+								choices = list(WithLegend = "WithLegend",
+								               NoLegend = "NoLegend"), 
+								width = "100%")),
+
+          column(12, tags$br()),
+          column(12,  align = "center", 
+          radioGroupButtons("selectCutOffPtimeLinePlot",
+                         "Select Graph Cutoff:", 
+                         choices = list(noCutoff = "NoCutOff", 
+                         cutOffAfterBranching = "AfterBranchingPoint"), 
+                         width = "100%")),
 
 					fluidRow(tags$br()),
 					fluidRow(tags$br()),
@@ -259,127 +270,135 @@ ui <- fixedPage(theme = shinythemes::shinytheme("lumen"), # paper lumen cosmo
 				)
 		 )
 	)
- 	), #end PtimeLinePlot tab
+	), #end PtimeLinePlot tab
 # 
 # ================ #Multi-Genes Pseudotime Line Plots tab
-tabPanel("Multi-Genes Pseudotime Line Plots", fluid = FALSE,
-         sidebarLayout(fluid = TRUE,
+	tabPanel("Multi-Genes Pseudotime Line Plots", fluid = FALSE,
+			sidebarLayout(fluid = TRUE,
 
-                       sidebarPanel(width = 4,
+				sidebarPanel(width = 4,
 
-                                    column(12, align = "left",
-                                           textInput("multptimeLinePlotGenes", "Insert gene name or ensembl ID:",
-                                                     value = smpl_genes_lg)),
+					column(12, align = "left",
+						textInput("multptimeLinePlotGenes", "Insert gene name or ensembl ID:",
+							value = smpl_genes_lg)),
 
-                                    column(12, align = "center",
-                                           actionButton("runMultiPtimeLinePlot", "Generate Plots",
-                                                        style = 'padding:5px; font-size:80%')),
+					column(12, align = "center",
+						actionButton("runMultiPtimeLinePlot", "Generate Plots",
+							style = 'padding:5px; font-size:80%')),
 
-                                    column(12, tags$hr(width = "50%"), align = "center"),
-                                    column(12, align = "center",
-                                           downloadButton("downloadSVGMultiGPtimeLinePlotF", "Download SVG",
-                                                          style = 'padding:5px; font-size:80%')),
+					column(12, tags$hr(width = "50%"), align = "center"),
+					column(12, align = "center",
+						downloadButton("downloadSVGMultiGPtimeLinePlotF", "Download SVG",
+							style = 'padding:5px; font-size:80%')),
 
-                                    column(12, tags$hr(width = "50%"), align = "center"),
-                                    column(12, align = "center",
-                                           downloadButton("downloadPDFMultiGPtimeLinePlotF", "Download PDF",
-                                                          style = 'padding:5px; font-size:80%')),
+					column(12, tags$hr(width = "50%"), align = "center"),
+					column(12, align = "center",
+						downloadButton("downloadPDFMultiGPtimeLinePlotF", "Download PDF",
+							style = 'padding:5px; font-size:80%')),
 
-                                    column(12, tags$hr(width = "50%"), align = "center"),
-                                    column(12, align = "center",
-                                           downloadButton("downloadPNGMultiGPtimeLinePlotF", "Download PNG",
-                                                          style = 'padding:5px; font-size:80%')),
+					column(12, tags$hr(width = "50%"), align = "center"),
+					column(12, align = "center",
+							downloadButton("downloadPNGMultiGPtimeLinePlotF", "Download PNG",
+								style = 'padding:5px; font-size:80%')),
+					
+					column(12, tags$br()),
+					column(12,  align = "center", 
+					       radioGroupButtons("selectCutOffMultiGPtimeLinePlot",
+					                         "Select Graph Cutoff:", 
+					                         choices = list(noCutoff = "NoCutOff", 
+					                        cutOffAfterBranching = "AfterBranchingPoint"), 
+					                         width = "100%")),
 
-                                    # column(12, tags$br()),
-                                    # column(12, align = "center", uiOutput("cellSelectFeat")),
+# column(12, tags$br()),
+# column(12, align = "center", uiOutput("cellSelectFeat")),
 
-                                    # column(12, tags$br()),
-                                    # column(12,  align = "center", radioGroupButtons("selectGrpMultiPtimeLinePlot",
-                                    #                                                 "Graph Choices:", choices = list(WithLegend = "WithLegend", NoLegend = "NoLegend"), width = "100%")),
+# column(12, tags$br()),
+# column(12,  align = "center", radioGroupButtons("selectGrpMultiPtimeLinePlot",
+#                                                 "Graph Choices:", choices = list(WithLegend = "WithLegend", NoLegend = "NoLegend"), width = "100%")),
 
-                                    fluidRow(tags$br()),
-                                    fluidRow(tags$br()),
-                                    column(12, uiOutput("plot.uiDatFeatPlotV4"), align = "center"),
-                                    fluidRow(tags$br()),
-                                    fluidRow(tags$br())
-                       ),
+					fluidRow(tags$br()),
+					fluidRow(tags$br()),
+					column(12, uiOutput("plot.uiDatFeatPlotV4"), align = "center"),
+					fluidRow(tags$br()),
+					fluidRow(tags$br())
+	),
 
-                       mainPanel(
-                         fluidRow(
-                           column(8, tags$br()),
-                           column(8, tags$b("Mismatches or genes not present"),
-                                  "(if applicable)", tags$b(":")),
-                           column(8,uiOutput("notInMultiPtimeLinePlot")),
-                           column(8, tags$hr()),
+	mainPanel(
+			fluidRow(
+				column(8, tags$br()),
+				column(8, tags$b("Mismatches or genes not present"),
+					"(if applicable)", tags$b(":")),
+				column(8,uiOutput("notInMultiPtimeLinePlot")),
+				column(8, tags$hr()),
 
-                           fluidRow(tags$br()),
-                           column(12, uiOutput("plot.uiMultiGPtimeLinePlotF")
-                           )
-                         )
-                       )
-         )
-), #end multiple gene tab
+				fluidRow(tags$br()),
+				column(12, uiOutput("plot.uiMultiGPtimeLinePlotF")
+				      )
+				)
+		 )
+	)
+	), #end multiple gene tab
 
 # ================ # Heatmap
-tabPanel("Heatmap", fluid = FALSE,
-         sidebarLayout(fluid = TRUE,
-                       
-                       sidebarPanel(width = 4,
-                                    
-                                    column(12, align = "left",
-                                           textInput("hmapGenes", "Insert gene name or ensembl ID:",
-                                                     value = smpl_genes_lg)),
-                                    
-                                    column(12, align = "center",
-                                           actionButton("runHmap", "Generate Plots",
-                                                        style = 'padding:5px; font-size:80%')),
-                                    
-                                    column(12, tags$hr(width = "50%"), align = "center"),
-                                    column(12, align = "center",
-                                           downloadButton("downloadSVGHeatmapF", "Download SVG",
-                                                          style = 'padding:5px; font-size:80%')),
-                                    
-                                    column(12, tags$hr(width = "50%"), align = "center"),
-                                    column(12, align = "center",
-                                           downloadButton("downloadPDFHeatmapF", "Download PDF",
-                                                          style = 'padding:5px; font-size:80%')),
-                                    
-                                    column(12, tags$hr(width = "50%"), align = "center"),
-                                    column(12, align = "center",
-                                           downloadButton("downloadPNGHeatmapF", "Download PNG",
-                                                          style = 'padding:5px; font-size:80%')),
-                                    
-    
-                                    fluidRow(tags$br()),
-                                    fluidRow(tags$br()),
-                                    column(12, uiOutput("plot.uiDatFeatPlotV5"), align = "center"),
-                                    fluidRow(tags$br()),
-                                    fluidRow(tags$br())
-                       ),
-                       
-                       mainPanel(
-                         fluidRow(
-                           column(8, tags$br()),
-                           column(8, tags$b("Mismatches or genes not present"),
-                                  "(if applicable)", tags$b(":")),
-                           column(8,uiOutput("notInHmap")),
-                           column(8, tags$hr()),
-                           
-                           column(8, align = "left",
-                                  column(3, align = "left", numericInput(
-                                    "manAdjustHmapW", label = "Width (inches):", value = 12, step = 1,
-                                    width = "100%")),
-                                  column(3,  align = "left", numericInput(
-                                    "manAdjustHmapH", label = "Height (inches):", value = 9, step = 1,
-                                    width = "100%"))
-                           ),
-                           fluidRow(tags$br()),
-                           column(12, uiOutput("plot.uiHeatmapF")
-                           )
-                         )
-                       )
-         )
-) #end hmap tab
+	tabPanel("Heatmap", fluid = FALSE,
+			sidebarLayout(fluid = TRUE,
+
+				sidebarPanel(width = 4,
+
+					column(12, align = "left",
+						textInput("hmapGenes", "Insert gene name or ensembl ID:",
+							value = smpl_genes_lg)),
+
+					column(12, align = "center",
+						actionButton("runHmap", "Generate Plots",
+							style = 'padding:5px; font-size:80%')),
+
+					column(12, tags$hr(width = "50%"), align = "center"),
+					column(12, align = "center",
+						downloadButton("downloadSVGHeatmapF", "Download SVG",
+							style = 'padding:5px; font-size:80%')),
+
+					column(12, tags$hr(width = "50%"), align = "center"),
+					column(12, align = "center",
+						downloadButton("downloadPDFHeatmapF", "Download PDF",
+							style = 'padding:5px; font-size:80%')),
+
+					column(12, tags$hr(width = "50%"), align = "center"),
+					column(12, align = "center",
+							downloadButton("downloadPNGHeatmapF", "Download PNG",
+								style = 'padding:5px; font-size:80%')),
+
+
+					fluidRow(tags$br()),
+					fluidRow(tags$br()),
+					column(12, uiOutput("plot.uiDatFeatPlotV5"), align = "center"),
+					fluidRow(tags$br()),
+					fluidRow(tags$br())
+	),
+
+	mainPanel(
+			fluidRow(
+				column(8, tags$br()),
+				column(8, tags$b("Mismatches or genes not present"),
+					"(if applicable)", tags$b(":")),
+				column(8,uiOutput("notInHmap")),
+				column(8, tags$hr()),
+
+				column(8, align = "left",
+					column(3, align = "left", numericInput(
+							"manAdjustHmapW", label = "Width (inches):", value = 12, step = 1,
+							width = "100%")),
+					column(3,  align = "left", numericInput(
+							"manAdjustHmapH", label = "Height (inches):", value = 9, step = 1,
+							width = "100%"))
+				      ),
+				fluidRow(tags$br()),
+				column(12, uiOutput("plot.uiHeatmapF")
+				      )
+				)
+		 )
+	)
+	) #end hmap tab
 	) #tabsetPanel
 #end div
 	,style = 'width:1550px;')) #end
